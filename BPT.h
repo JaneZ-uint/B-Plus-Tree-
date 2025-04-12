@@ -7,6 +7,7 @@
 #include <string>
 template<class KEY,class OTHER,int M = 100,int L = 100>
 class BPT {
+private:
     std::fstream indexTree;//索引块
     std::fstream leaf;//数据块
     std::string indexTree_name;

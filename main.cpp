@@ -9,6 +9,7 @@ int main() {
     int index,value;
     for(int i = 1;i <= n;i ++) {
         std::cin >> op;
+
         if(op == "insert") {
             std::cin >> index >> value;
         }else if(op == "delete") {
