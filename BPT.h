@@ -5,6 +5,10 @@
 #define BPT_H
 #include <fstream>
 #include <string>
+
+#include "exceptions.h"
+#include "vector.h"
+using namespace sjtu;
 template<class KEY,class OTHER,int M = 100,int L = 100>
 class BPT {
 private:
@@ -12,6 +16,18 @@ private:
     std::fstream leaf;//数据块 前2个int大小的块存nextLeafPos和 FirstLeaf.Pos 先后顺序就是这个
     std::string indexTree_name;
     std::string leaf_name;
+
+    struct IndexFileHeader{
+        int root_pos;
+        int first_free;
+    };
+    const int IndexFileHeaderSize = sizeof(IndexFileHeader);
+
+    struct LeafFileHeader{
+        int sum_data;
+        int first_free;
+    };
+    const int LeafFileHeaderSize = sizeof(LeafFileHeader);
 
     struct IndexNode {
         bool is_leaf = false;
@@ -36,17 +52,24 @@ private:
 
     IndexNode root;
     LeafNode Data;
-    long long int totalNum = 0;
+    int totalNum = 0;
     int nextIndexNodePos;
     int nextLeafNodePos;
 
+    void openFile() {
+        indexTree.open(indexTree_name,std::ios::binary | std::ios::in | std::ios::out);
+        leaf.open(leaf_name,std::ios::binary | std::ios::in | std::ios::out);
+    }
+    void closeFile() {
+        indexTree.close();
+        leaf.close();
+    }
     void writeInfoIndex(IndexNode &written_index,int position) {
-        indexTree.seekp(2 * sizeof(int) + position * sizeof(IndexNode));
+        indexTree.seekp(IndexFileHeaderSize + position * sizeof(IndexNode));
         indexTree.write(reinterpret_cast<char*>(&written_index),sizeof(IndexNode));
     }
-
     void writeInfoLeaf(LeafNode &written_leaf,int position) {
-        leaf.seekp(2 * sizeof(int) + position * sizeof(LeafNode));
+        leaf.seekp(LeafFileHeaderSize + position * sizeof(LeafNode));
         leaf.write(reinterpret_cast<char*>(&written_leaf),sizeof(LeafNode));
     }
     void initialize() {
@@ -59,23 +82,51 @@ private:
         nextIndexNodePos = 1;
         nextLeafNodePos = 1;
         LeafNode FirstLeaf(true,1,0,0);
-        writeInfoLeaf(FirstLeaf,1);//TODO Wait further check.
+        writeInfoLeaf(FirstLeaf,1);
+    }
+    void LoadMetaData() {
+        indexTree.seekg(0);
+        leaf.seekg(0);
+        IndexFileHeader tmp1;
+        LeafFileHeader tmp2;
+        indexTree.read(reinterpret_cast<char*>(&tmp1),IndexFileHeaderSize);
+        nextIndexNodePos = tmp1.first_free;
+        leaf.read(reinterpret_cast<char*>(&tmp2),LeafFileHeaderSize);
+        indexTree.seekg(IndexFileHeaderSize + tmp1.root_pos * sizeof(IndexNode));
+        indexTree.read(reinterpret_cast<char*>(&root),sizeof(IndexNode));//读根结点
+        totalNum = tmp2.sum_data;
+        nextLeafNodePos = tmp2.first_free;
     }
 public:
     BPT(const std::string &s1,const std::string &s2) {
         indexTree_name = s1;
         leaf_name = s2;
-        indexTree.open(indexTree_name,std::ios::binary | std::ios::in | std::ios::out);
-        leaf.open(leaf_name,std::ios::binary | std::ios::in | std::ios::out);
+        openFile();
         if(!indexTree && !leaf) {
             indexTree.open(indexTree_name,std::ios::binary | std::ios::out);
             leaf.open(leaf_name,std::ios::binary | std::ios::out);
             initialize();
-            indexTree.close();
-            leaf.close();
-            indexTree.open(indexTree_name,std::ios::binary | std::ios::in | std::ios::out);
-            leaf.open(leaf_name,std::ios::binary | std::ios::in | std::ios::out);
+            closeFile();
+            openFile();
+        }else {
+            LoadMetaData();
         }
+        closeFile();
+    }
+    ~BPT() {
+        try {
+            if(indexTree.is_open()) {
+                indexTree.close();
+            }
+            if(leaf.is_open()) {
+                leaf.close();
+            }
+        }catch(...) {
+            std::cerr << "Failed to close files.";
+        }
+    }
+    sjtu::vector<int> find(KEY k) {
+
     }
 };
 #endif //BPT_H

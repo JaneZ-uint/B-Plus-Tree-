@@ -7,7 +7,7 @@ int main() {
     int n;
     std::cin >> n;
     std::string op,index;
-    BPT<const char*,int,100,100> BPlusTree("IndexFile","LeafFile");
+    BPT<const char*,int,100,100> BPlusTree("IndexFile.txt","LeafFile.txt");
     int value;
     for(int i = 1;i <= n;i ++) {
         std::cin >> op;
@@ -20,6 +20,15 @@ int main() {
         }else if(op == "find") {
             std::cin >> index;
             const char* tranfer_index = index.c_str();
+            sjtu::vector<int> tmp = BPlusTree.find(tranfer_index);
+            if(tmp.empty()) {
+                std::cout << "null" << '\n';
+            }else {
+                for(int j = 0;j < tmp.size();j ++) {
+                    std::cout << tmp[j] << " ";
+                }
+                std::cout << '\n';
+            }
         }
     }
 }
