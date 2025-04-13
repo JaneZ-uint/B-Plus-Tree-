@@ -14,9 +14,11 @@ int main() {
         if(op == "insert") {
             std::cin >> index >> value;
             const char* tranfer_index = index.c_str();
+            BPlusTree.insert(tranfer_index,value);
         }else if(op == "delete") {
             std::cin >> index >> value;
             const char* tranfer_index = index.c_str();
+            BPlusTree.erase(tranfer_index,value);
         }else if(op == "find") {
             std::cin >> index;
             const char* tranfer_index = index.c_str();
