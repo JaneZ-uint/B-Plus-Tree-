@@ -29,12 +29,29 @@ private:
     };
     const int LeafFileHeaderSize = sizeof(LeafFileHeader);
 
+    struct KO {
+        KEY k;
+        OTHER other;
+        bool operator<(const KO a) { //重载<运算符
+            if(this->k < a.k) {
+                return true;
+            }else if(this -> k > a.k) {
+                return false;
+            }else {
+                if(this->other < a.other) {
+                    return true;
+                }else {
+                    return false;
+                }
+            }
+        }
+    };
     struct IndexNode {
         bool is_leaf = false;
         int keyNum;//关键字数量
         int childNum;//孩子数量
         int pos;//当前结点在disk上的位置
-        KEY Key[M - 1];
+        KO Key[M - 1];//注意：这里必须存键值对，因为可能存在一个键值对应多个value的情况
         int ChildPointer[M];//磁盘位置
 
         IndexNode(bool whether,int k = 0,int c = 0,int p = 1):is_leaf(whether),keyNum(k),childNum(c),pos(p){}
@@ -44,7 +61,7 @@ private:
         bool is_leaf = true;
         int pos;//当前结点在disk上的位置
         int num;//存储键值对数量
-        std::pair<KEY,OTHER> Info[L];//键值对信息
+        KO Info[L];//键值对信息
         int next;//下一个LeafNode位置
 
         LeafNode(bool whether = true,int p = 1,int n = 0,int nxt):is_leaf(whether),pos(p),num(n),next(nxt) {}
@@ -97,6 +114,57 @@ private:
         totalNum = tmp2.sum_data;
         nextLeafNodePos = tmp2.first_free;
     }
+    int searchIndexForInsert(KO k,IndexNode &current) { //查询当前索引块中相应的孩子指针 二分  对于插入删除操作
+        int l = 0,r = current.keyNum - 1;
+        int ans = -1;
+        while(l <= r) {
+            int mid = (l + r)/2;
+            if(current.Key[mid] < k) {
+                ans = mid;
+                l = mid + 1;
+            }else if(current.Key[mid] == k){
+                ans = mid;
+                break;
+            }else {
+                r = mid - 1;
+            }
+        }
+        return ans + 1;//在childPointer数组中的下标
+    }
+    int searchLeafForInsert(KO k,LeafNode &current) { ////查询当前叶子块中KO对的位置 二分  对于插入操作
+        int l = 0,r = current.num - 1;
+        int ans = -1;
+        while(l <= r) {
+            int mid = (l + r)/2;
+            if(current.num[mid] < k) {
+                ans = mid;
+                l = mid + 1;
+            }else if(current.num[mid] == k) {
+                ans = mid;
+                break;
+            }else {
+                r = mid - 1;
+            }
+        }
+        return ans + 1;//在current中的插入位置
+    }
+    int searchLeafForErase(KO k,LeafNode &current) { //查询当前叶子块中KO对的位置 二分  对于删除操作
+        int l = 0,r = current.num - 1;
+        int ans = -1;
+        while(l <= r) {
+            int mid = (l + r)/2;
+            if(current.Info[mid] < k) {
+                l = mid + 1;
+            }else if(current.Info[mid] == k) {
+                ans = k;
+                break;
+            }else {
+                r = mid -1;
+            }
+        }
+        return ans;
+    }
+
 public:
     BPT(const std::string &s1,const std::string &s2) {
         indexTree_name = s1;
@@ -115,17 +183,18 @@ public:
     }
     ~BPT() {
         try {
-            if(indexTree.is_open()) {
-                indexTree.close();
-            }
-            if(leaf.is_open()) {
-                leaf.close();
-            }
+            closeFile();
         }catch(...) {
             std::cerr << "Failed to close files.";
         }
     }
     sjtu::vector<int> find(KEY k) {
+
+    }
+    void insert(KEY k,OTHER other) {
+
+    }
+    void erase(KEY k,OTHER other) {
 
     }
 };
