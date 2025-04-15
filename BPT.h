@@ -32,6 +32,8 @@ private:
     struct KO {
         KEY k;
         OTHER other;
+        KO(KEY _k):k(_k),OTHER(std::numeric_limits<OTHER>::min()){}
+        KO(KEY _k,OTHER _other):k(_k),other(_other){}
         bool operator<(const KO a) { //重载<运算符
             if(this->k < a.k) {
                 return true;
@@ -46,6 +48,7 @@ private:
             }
         }
     };
+
     struct IndexNode {
         bool is_leaf = false;
         int keyNum;//关键字数量
@@ -81,6 +84,22 @@ private:
         indexTree.close();
         leaf.close();
     }
+    void readIndexNode(IndexNode &current,int pos) {
+        indexTree.seekg(pos * sizeof(IndexNode) + IndexFileHeaderSize);
+        indexTree.read(reinterpret_cast<char*>(&current),sizeof(IndexNode));
+    }
+    void readLeafNode(LeafNode &current,int pos) {
+        leaf.seekg(pos * sizeof(LeafNode) + LeafFileHeaderSize);
+        leaf.read(reinterpret_cast<char*>(&current),sizeof(LeafNode));
+    }
+    void writeIndexNode(IndexNode &current) {
+        indexTree.seekp(current.pos*sizeof(IndexNode) + IndexFileHeaderSize);
+        indexTree.write(reinterpret_cast<char*>(&current),sizeof(IndexNode));
+    }
+    void writeLeafNode(LeafNode &current) {
+        leaf.seekp(current.pos*sizeof(LeafNode) + LeafFileHeaderSize);
+        leaf.write(reinterpret_cast<char*>(&current),sizeof(LeafNode));
+    }
     void writeInfoIndex(IndexNode &written_index,int position) {
         indexTree.seekp(IndexFileHeaderSize + position * sizeof(IndexNode));
         indexTree.write(reinterpret_cast<char*>(&written_index),sizeof(IndexNode));
@@ -114,7 +133,35 @@ private:
         totalNum = tmp2.sum_data;
         nextLeafNodePos = tmp2.first_free;
     }
-    int searchIndexForInsert(KO k,IndexNode &current) { //查询当前索引块中相应的孩子指针 二分  对于插入删除操作
+    int searchIndexToFindMin(KEY &k,IndexNode &current) {  //找到可能出现的最小块和最大块 TODO 很好这个要重写
+        int l = 0,r = current.keyNum - 1;
+        int MinBlock = -1;
+        while(l <= r) {
+            int mid = (l + r)/2;
+            if(current.Key[mid].k < k) {
+                MinBlock = mid;
+                l = mid + 1;
+            }else {
+                r = mid - 1;
+            }
+        }
+        return MinBlock + 1;
+    }
+    int searchIndexToFindMax(KEY &k,IndexNode &current) {
+        int l = 0,r = current.keyNum - 1;
+        int MaxBlock = current.keyNum - 1;
+        while(l <= r) {
+            int mid = (l + r)/2;
+            if(current.Key[mid].k > k) {
+                MaxBlock = mid;
+                r = mid - 1;
+            }else {
+                l = mid + 1;
+            }
+        }
+        return MaxBlock;
+    }
+    int searchIndexForInsert(KO &k,IndexNode &current) { //查询当前索引块中相应的孩子指针 二分  对于插入删除操作
         int l = 0,r = current.keyNum - 1;
         int ans = -1;
         while(l <= r) {
@@ -131,7 +178,7 @@ private:
         }
         return ans + 1;//在childPointer数组中的下标
     }
-    int searchLeafForInsert(KO k,LeafNode &current) { ////查询当前叶子块中KO对的位置 二分  对于插入操作
+    int searchLeafForInsert(KO &k,LeafNode &current) { ////查询当前叶子块中KO对的位置 二分  对于插入操作
         int l = 0,r = current.num - 1;
         int ans = -1;
         while(l <= r) {
@@ -140,15 +187,15 @@ private:
                 ans = mid;
                 l = mid + 1;
             }else if(current.num[mid] == k) {
-                ans = mid;
+                ans = -2;
                 break;
             }else {
                 r = mid - 1;
             }
         }
-        return ans + 1;//在current中的插入位置
+        return ans + 1;//在current中的插入位置 返回-1则表示值已经存在
     }
-    int searchLeafForErase(KO k,LeafNode &current) { //查询当前叶子块中KO对的位置 二分  对于删除操作
+    int searchLeafForErase(KO &k,LeafNode &current) { //查询当前叶子块中KO对的位置 二分  对于删除操作
         int l = 0,r = current.num - 1;
         int ans = -1;
         while(l <= r) {
@@ -162,7 +209,7 @@ private:
                 r = mid -1;
             }
         }
-        return ans;
+        return ans;//返回-1则表示键值对不存在
     }
 
 public:
@@ -182,19 +229,30 @@ public:
         closeFile();
     }
     ~BPT() {
-        try {
-            closeFile();
-        }catch(...) {
-            std::cerr << "Failed to close files.";
+        indexTree.seekp(0);
+        leaf.seekp(0);
+        IndexFileHeader tmp1(root.pos,nextIndexNodePos);
+        indexTree.write(reinterpret_cast<char*>(&tmp1),IndexFileHeaderSize);
+        LeafFileHeader tmp2(totalNum,nextLeafNodePos);
+        leaf.write(reinterpret_cast<char*>(&tmp2),LeafFileHeaderSize);
+        writeIndexNode(root);
+        closeFile();
+    }
+    sjtu::vector<OTHER> find(const KEY &k) {
+        sjtu::vector<OTHER> results;
+        if(root.keyNum == 0) {
+            return results;
+        }
+        IndexNode current = root;
+        while(!current.is_leaf) {
+            int idx = searchIndexToFindMin(k,current);
+
         }
     }
-    sjtu::vector<int> find(KEY k) {
+    void insert(const KEY &k,const OTHER &other) {
 
     }
-    void insert(KEY k,OTHER other) {
-
-    }
-    void erase(KEY k,OTHER other) {
+    void erase(const KEY &k,const OTHER &other) {
 
     }
 };
