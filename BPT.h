@@ -76,64 +76,16 @@ private:
     int nextIndexNodePos;
     int nextLeafNodePos;
 
-    void openFile() {
-        indexTree.open(indexTree_name,std::ios::binary | std::ios::in | std::ios::out);
-        leaf.open(leaf_name,std::ios::binary | std::ios::in | std::ios::out);
-    }
-    void closeFile() {
-        indexTree.close();
-        leaf.close();
-    }
-    void readIndexNode(IndexNode &current,int pos) {
-        indexTree.seekg(pos * sizeof(IndexNode) + IndexFileHeaderSize);
-        indexTree.read(reinterpret_cast<char*>(&current),sizeof(IndexNode));
-    }
-    void readLeafNode(LeafNode &current,int pos) {
-        leaf.seekg(pos * sizeof(LeafNode) + LeafFileHeaderSize);
-        leaf.read(reinterpret_cast<char*>(&current),sizeof(LeafNode));
-    }
-    void writeIndexNode(IndexNode &current) {
-        indexTree.seekp(current.pos*sizeof(IndexNode) + IndexFileHeaderSize);
-        indexTree.write(reinterpret_cast<char*>(&current),sizeof(IndexNode));
-    }
-    void writeLeafNode(LeafNode &current) {
-        leaf.seekp(current.pos*sizeof(LeafNode) + LeafFileHeaderSize);
-        leaf.write(reinterpret_cast<char*>(&current),sizeof(LeafNode));
-    }
-    void writeInfoIndex(IndexNode &written_index,int position) {
-        indexTree.seekp(IndexFileHeaderSize + position * sizeof(IndexNode));
-        indexTree.write(reinterpret_cast<char*>(&written_index),sizeof(IndexNode));
-    }
-    void writeInfoLeaf(LeafNode &written_leaf,int position) {
-        leaf.seekp(LeafFileHeaderSize + position * sizeof(LeafNode));
-        leaf.write(reinterpret_cast<char*>(&written_leaf),sizeof(LeafNode));
-    }
-    void initialize() {
-        root.is_leaf = true;
-        root.keyNum = 0;
-        root.childNum = 1;
-        root.pos = 1;
-        root.ChildPointer[0] = 1;
-        totalNum = 0;
-        nextIndexNodePos = 1;
-        nextLeafNodePos = 1;
-        LeafNode FirstLeaf(true,1,0,0);
-        writeInfoLeaf(FirstLeaf,1);
-    }
-    void LoadMetaData() {
-        indexTree.seekg(0);
-        leaf.seekg(0);
-        IndexFileHeader tmp1;
-        LeafFileHeader tmp2;
-        indexTree.read(reinterpret_cast<char*>(&tmp1),IndexFileHeaderSize);
-        nextIndexNodePos = tmp1.first_free;
-        leaf.read(reinterpret_cast<char*>(&tmp2),LeafFileHeaderSize);
-        indexTree.seekg(IndexFileHeaderSize + tmp1.root_pos * sizeof(IndexNode));
-        indexTree.read(reinterpret_cast<char*>(&root),sizeof(IndexNode));//读根结点
-        totalNum = tmp2.sum_data;
-        nextLeafNodePos = tmp2.first_free;
-    }
-    int searchIndexToFindMin(KEY &k,IndexNode &current) {  //找到可能出现的最小块和最大块 TODO 很好这个要重写
+    void openFile();
+    void closeFile();
+    void readIndexNode(IndexNode &current,int pos);
+    void readLeafNode(LeafNode &current,int pos);
+    void writeIndexNode(IndexNode &current);
+    void writeLeafNode(LeafNode &current);
+    void initialize();
+    void LoadMetaData();
+
+    int searchIndexToFind(KEY &k,IndexNode &current) {  //找到最后一个以小于k的键值开始的索引块（如果没有小于的则返回第0个块
         int l = 0,r = current.keyNum - 1;
         int MinBlock = -1;
         while(l <= r) {
@@ -147,19 +99,21 @@ private:
         }
         return MinBlock + 1;
     }
-    int searchIndexToFindMax(KEY &k,IndexNode &current) {
-        int l = 0,r = current.keyNum - 1;
-        int MaxBlock = current.keyNum - 1;
+    int searchLeafToFind(KEY &k,LeafNode &current) {
+        int l = 0,r = current.num - 1;
+        int ans = 0;
         while(l <= r) {
             int mid = (l + r)/2;
-            if(current.Key[mid].k > k) {
-                MaxBlock = mid;
+            if(current.Info[mid].k < k) {
+                l = mid + 1;
+            }else if(current.Info[mid].k == k) {
+                ans = mid;
                 r = mid - 1;
             }else {
-                l = mid + 1;
+                r = mid - 1;
             }
         }
-        return MaxBlock;
+        return ans;
     }
     int searchIndexForInsert(KO &k,IndexNode &current) { //查询当前索引块中相应的孩子指针 二分  对于插入删除操作
         int l = 0,r = current.keyNum - 1;
@@ -239,15 +193,38 @@ public:
         closeFile();
     }
     sjtu::vector<OTHER> find(const KEY &k) {
+        openFile();
         sjtu::vector<OTHER> results;
         if(root.keyNum == 0) {
             return results;
         }
         IndexNode current = root;
+        LeafNode target;
+        int idx;
         while(!current.is_leaf) {
-            int idx = searchIndexToFindMin(k,current);
-
+            idx = searchIndexToFind(k,current);
+            readIndexNode(current,idx);
         }
+        idx = searchIndexToFind(k,current);
+        readLeafNode(target,idx);
+        idx = searchLeafToFind(k,target);
+        for(int i = idx;i < target.num;i ++) {
+            results.push_back(target.Info[i].other);
+        }
+        bool flag = true;
+        while(target.next != 0 && flag) {
+            readLeafNode(target,target.next);
+            for(int i = 0;i < target.num;i ++) {
+                if(target.Info[i].k == k) {
+                    results.push_back(target.Info[i].other);
+                }else {
+                    flag = false;
+                    break;
+                }
+            }
+        }
+        closeFile();
+        return results;
     }
     void insert(const KEY &k,const OTHER &other) {
 

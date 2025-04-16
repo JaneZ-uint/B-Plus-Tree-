@@ -2,6 +2,9 @@
 //
 // Created by JaneZ on 2025/4/15.
 //
+/*
+ *并未将所有成员函数都写入source file，只有与文件读写相关的函数
+ */
 template<class KEY,class OTHER,int M = 100,int L = 100>
 void BPT<KEY,OTHER,M,L>::openFile() {
     indexTree.open(indexTree_name,std::ios::binary | std::ios::in | std::ios::out);
