@@ -32,8 +32,7 @@ private:
     struct KO {
         KEY k;
         OTHER other;
-        KO(KEY _k):k(_k),OTHER(std::numeric_limits<OTHER>::min()){}
-        KO(KEY _k,OTHER _other):k(_k),other(_other){}
+        KO(const KEY &_k,const OTHER &_other):k(_k),other(_other){}
         bool operator<(const KO a) { //重载<运算符
             if(this->k < a.k) {
                 return true;
@@ -47,17 +46,22 @@ private:
                 }
             }
         }
+        bool operator==(const KO &a) const {
+            if(k == a.k && other == a.other) {
+                return true;
+            }
+            return false;
+        }
     };
 
     struct IndexNode {
         bool is_leaf = false;
         int keyNum;//关键字数量
-        int childNum;//孩子数量
         int pos;//当前结点在disk上的位置
         KO Key[M - 1];//注意：这里必须存键值对，因为可能存在一个键值对应多个value的情况
         int ChildPointer[M];//磁盘位置
 
-        IndexNode(bool whether,int k = 0,int c = 0,int p = 1):is_leaf(whether),keyNum(k),childNum(c),pos(p){}
+        IndexNode(bool whether,int k = 0,int p = 1):is_leaf(whether),keyNum(k),pos(p){}
     };
 
     struct LeafNode {
@@ -165,7 +169,71 @@ private:
         }
         return ans;//返回-1则表示键值对不存在
     }
+    bool splitLeaf(LeafNode &current,IndexNode &above,int idx) { //分裂叶结点
+        LeafNode newLeaf;
+        int mid = L/2;
+        for(int i = 0;i < mid;i ++) {
+            newLeaf.Info[i] = current.Info[i + mid];
+        }
+        newLeaf.num = mid;
+        current.num = mid;
+        newLeaf.pos = ++ nextLeafNodePos;
+        //TODO Wait to be checked
+        for(int i = above.keyNum + 1;i > idx + 1;i --) {
+            above.ChildPointer[i] = above.ChildPointer[i - 1];
+        }
+        above.ChildPointer[idx + 1] = newLeaf.pos;
+        for(int i = above.keyNum;i > idx;i --) {
+            above.Key[i] = above.Key[i - 1];
+        }
+        above.Key[idx] = newLeaf.Info[0];
+        newLeaf.next = current.next;
+        current.next = newLeaf.pos;
+        writeLeafNode(newLeaf);
+        writeLeafNode(current);
+        above.keyNum ++;
+        if(above.keyNum == M - 1) {
+            //需要对父节点进行分裂
+            return true;
+        }
+        return false;
+    }
+    bool Insert(IndexNode &current,KO &tmp) {
+        /*
+         * 该函数如果需要继续分裂块，则return true ，不然return false
+         * 递归调用
+         * 先从indexnode下面就是叶结点开始考虑
+         */
+        if(current.is_leaf) {
+            int idx = searchIndexForInsert(tmp,current);
+            LeafNode search;
+            readLeafNode(search,current.ChildPointer[idx]);
+            idx = searchLeafForInsert(tmp,search);//插入位置的坐标
+            if(idx == -1) {
+                return false;//插入节点原本就存在
+            }
+            totalNum ++;
+            for(int i = search.Info[search.num - 1];i > idx;i --) {
+                search.Info[i] = search.Info[i - 1];
+            }
+            search.num ++;
+            if(search.num == L) {
+                //需要裂块
+                if(splitLeaf(search,current,idx)) {
+                    //需要对索引块进行分裂
+                    return true;
+                }else {
+                    return false;
+                }
+            }else {
+                writeLeafNode(search);
+                return false;
+            }
+        }else {
+            //TODO
 
+        }
+    }
 public:
     BPT(const std::string &s1,const std::string &s2) {
         indexTree_name = s1;
@@ -227,6 +295,8 @@ public:
         return results;
     }
     void insert(const KEY &k,const OTHER &other) {
+        openFile();
+        KO tmp(k,other);
 
     }
     void erase(const KEY &k,const OTHER &other) {

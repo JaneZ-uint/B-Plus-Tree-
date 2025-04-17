@@ -45,7 +45,6 @@ template<class KEY,class OTHER,int M = 100,int L = 100>
 void BPT<KEY,OTHER,M,L>::initialize() {
     root.is_leaf = true;
     root.keyNum = 0;
-    root.childNum = 1;
     root.pos = 1;
     root.ChildPointer[0] = 1;
     totalNum = 0;
