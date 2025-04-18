@@ -6,5 +6,4 @@ set(CMAKE_CXX_STANDARD 20)
 add_executable(BPlusTree main.cpp
         BPT.h
         vector.h
-        exceptions.h
-        BPT.cpp)
+        exceptions.h)
