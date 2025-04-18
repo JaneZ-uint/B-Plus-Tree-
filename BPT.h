@@ -3,13 +3,14 @@
 //
 #ifndef BPT_H
 #define BPT_H
+#include <emmintrin.h>
 #include <fstream>
 #include <string>
 
 #include "exceptions.h"
 #include "vector.h"
 using namespace sjtu;
-template<class KEY,class OTHER,int M = 100,int L = 100>
+template<class KEY,class OTHER,int M = 100,int L = 100>  //我需要M L是偶数
 class BPT {
 private:
     std::fstream indexTree;//索引块  前2个int大小的块存nextIndexPos和 root.pos 先后顺序就是这个
@@ -169,6 +170,76 @@ private:
         }
         return ans;//返回-1则表示键值对不存在
     }
+    void splitRoot(IndexNode &current) {  //分裂根节点稍有不同
+        IndexNode secondRoot;
+        int mid = M / 2;
+        /* M = 6
+         *     3
+         *    / \
+         *  1 2 4 5
+         */
+        for(int i = 0;i < mid;i ++) {
+            secondRoot.ChildPointer[i] = current.ChildPointer[i + mid];
+        }
+        for(int i = 0;i < mid - 1;i ++) {
+            secondRoot.Key[i] = current.Key[i + mid];
+        }
+        secondRoot.pos = ++nextIndexNodePos;
+        secondRoot.is_leaf = current.is_leaf;
+        secondRoot.keyNum = mid - 1;
+        current.keyNum = mid - 1;
+        writeIndexNode(secondRoot);
+        writeIndexNode(current);
+        IndexNode newRoot;
+        newRoot.ChildPointer[0] = current.pos;
+        newRoot.ChildPointer[1] = secondRoot.pos;
+        newRoot.Key = current[mid -1];
+        newRoot.pos = ++nextIndexNodePos;
+        newRoot.keyNum = 1;
+        newRoot.is_leaf = false;
+        root = newRoot;
+        writeIndexNode(newRoot);
+    }
+    bool splitNormalIndexNode(IndexNode &current,IndexNode &above,int idx) {
+        /*
+         *   1  2 3 4 5
+         *  / \  \ \ \ \
+         *       3
+         *      / \
+         *   1 2    4 5
+         *  / \ \  / \ \
+         */
+        IndexNode secondIndexNode;
+        int mid = M / 2;
+        for(int i = 0;i < mid;i ++) {
+            secondIndexNode.ChildPointer[i] = current.ChildPointer[i + mid];
+        }
+        for(int i = 0;i < mid - 1;i ++) {
+            secondIndexNode.Key[i] = current.Key[i + mid];
+        }
+        secondIndexNode.is_leaf = current.is_leaf;
+        secondIndexNode.pos = ++nextIndexNodePos;
+        secondIndexNode.keyNum = mid - 1;
+        current.keyNum = mid - 1;
+        writeIndexNode(secondIndexNode);
+        writeIndexNode(current);
+        //TODO
+        for(int i = above.keyNum + 1;i > idx + 1;i --) {
+            above.ChildPointer[i] = above.ChildPointer[i - 1];
+        }
+        above.ChildPointer[idx + 1] = secondIndexNode.pos;
+        for(int i = above.keyNum;i > idx;i --) {
+            above.Key[i] = above.Key[i - 1];
+        }
+        above.Key[idx] = current.Key[mid - 1];
+        above.keyNum ++;
+        if(above.keyNum == M - 1) {
+            return true;
+        }else {
+            writeIndexNode(above);
+            return false;
+        }
+    }
     bool splitLeaf(LeafNode &current,IndexNode &above,int idx) { //分裂叶结点
         LeafNode newLeaf;
         int mid = L/2;
@@ -192,8 +263,7 @@ private:
         writeLeafNode(newLeaf);
         writeLeafNode(current);
         above.keyNum ++;
-        if(above.keyNum == M - 1) {
-            //需要对父节点进行分裂
+        if(above.keyNum == M - 1) {  //需要对父节点进行分裂
             return true;
         }
         return false;
@@ -217,10 +287,8 @@ private:
                 search.Info[i] = search.Info[i - 1];
             }
             search.num ++;
-            if(search.num == L) {
-                //需要裂块
-                if(splitLeaf(search,current,idx)) {
-                    //需要对索引块进行分裂
+            if(search.num == L) { //需要裂块
+                if(splitLeaf(search,current,idx)) { //需要对索引块进行分裂
                     return true;
                 }else {
                     return false;
@@ -230,8 +298,18 @@ private:
                 return false;
             }
         }else {
-            //TODO
-
+            IndexNode child;
+            int idx = searchIndexForInsert(tmp,current);
+            readIndexNode(child,idx);
+            if(Insert(child,tmp)) {  //需要对普通的IndexNode进行分裂
+                if(splitNormalIndexNode(child,current,idx)) {
+                    return true;
+                }else {
+                    return false;
+                }
+            }else {
+                return false;
+            }
         }
     }
 public:
@@ -297,7 +375,11 @@ public:
     void insert(const KEY &k,const OTHER &other) {
         openFile();
         KO tmp(k,other);
-
+        if(Insert(root,tmp)) {
+            splitRoot();
+        }
+        //TODO
+        closeFile();
     }
     void erase(const KEY &k,const OTHER &other) {
 
