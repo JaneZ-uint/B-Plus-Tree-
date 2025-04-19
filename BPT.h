@@ -317,6 +317,7 @@ private:
         if(above.keyNum == M - 1) {  //需要对父节点进行分裂
             return true;
         }
+        writeIndexNode(above);
         return false;
     }
     bool Insert(IndexNode &current,KO &tmp) {
@@ -337,6 +338,7 @@ private:
             for(int i = search.num;i > idx;i --) {
                 search.Info[i] = search.Info[i - 1];
             }
+            search.Info[idx] = tmp;
             search.num ++;
             if(search.num == L) { //需要裂块
                 if(splitLeaf(search,current,idx)) { //需要对索引块进行分裂
@@ -631,31 +633,36 @@ public:
     sjtu::vector<OTHER> find(const KEY &k) {
         openFile();
         sjtu::vector<OTHER> results;
-        if(root.keyNum == 0) {
-            return results;
-        }
         IndexNode current = root;
         LeafNode target;
         int idx;
         while(!current.is_leaf) {
             idx = searchIndexToFind(k,current);
-            readIndexNode(current,idx);
+            readIndexNode(current,current.ChildPointer[idx]);
         }
         idx = searchIndexToFind(k,current);
-        readLeafNode(target,idx);
+        readLeafNode(target,current.ChildPointer[idx]);
         idx = searchLeafToFind(k,target);
+        bool fistFlag = false;
         for(int i = idx;i < target.num;i ++) {
-            results.push_back(target.Info[i].other);
+            if(target.Info[i].k == k){
+                results.push_back(target.Info[i].other);
+                if(i == target.num - 1) {
+                    fistFlag = true;
+                }
+            }
         }
-        bool flag = true;
-        while(target.next != 0 && flag) {
-            readLeafNode(target,target.next);
-            for(int i = 0;i < target.num;i ++) {
-                if(target.Info[i].k == k) {
-                    results.push_back(target.Info[i].other);
-                }else {
-                    flag = false;
-                    break;
+        if(fistFlag) {
+            bool flag = true;
+            while(target.next != 0 && flag) {
+                readLeafNode(target,target.next);
+                for(int i = 0;i < target.num;i ++) {
+                    if(target.Info[i].k == k) {
+                        results.push_back(target.Info[i].other);
+                    }else {
+                        flag = false;
+                        break;
+                    }
                 }
             }
         }
