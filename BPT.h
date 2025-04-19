@@ -351,7 +351,7 @@ private:
         }else {
             IndexNode child;
             int idx = searchIndexForInsert(tmp,current);
-            readIndexNode(child,idx);
+            readIndexNode(child,current.ChildPointer[idx]);
             if(Insert(child,tmp)) {  //需要对普通的IndexNode进行分裂
                 if(splitNormalIndexNode(child,current,idx)) {
                     return true;
