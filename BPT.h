@@ -9,7 +9,7 @@
 #include "exceptions.h"
 #include "vector.h"
 using namespace sjtu;
-template<class KEY,class OTHER,int M = 100,int L = 1005>  //我需要M L是偶数
+template<class KEY,class OTHER,int M = 2,int L = 2>  //我需要M L是偶数
 class BPT {
 private:
     std::fstream indexTree;//索引块  前2个int大小的块存nextIndexPos和 root.pos 先后顺序就是这个
@@ -317,6 +317,7 @@ private:
         if(above.keyNum == M - 1) {  //需要对父节点进行分裂
             return true;
         }
+        writeIndexNode(above);
         return false;
     }
     bool Insert(IndexNode &current,KO &tmp) {
@@ -327,9 +328,6 @@ private:
          */
         if(current.is_leaf) {
             LeafNode search;
-            //调试用
-            //readLeafNode(search,current.ChildPointer[0]);
-            //
             int idx = searchIndexForInsert(tmp,current);
             readLeafNode(search,current.ChildPointer[idx]);
             idx = searchLeafForInsert(tmp,search);//插入位置的坐标
