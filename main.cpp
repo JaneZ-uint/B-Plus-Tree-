@@ -3,14 +3,18 @@
 #include <string>
 #include <cstring>
 #include "BPT.h"
-unsigned long long customHash(const char* str) {
-    unsigned long long hash = 0;
-    unsigned long long prime = 31; // 选择一个小的素数作为乘积因子
-    for (size_t i = 0; i < strlen(str); ++i) {
-        hash = hash * prime + str[i];
+#include <cstdint>
+// 针对短字符串（≤64B）的高效哈希函数
+uint64_t customHash(const char* str) {
+    uint64_t hash = 0;
+    const uint64_t prime = 11400714819323198485ULL; // 2^64 / φ (黄金比例素数)
+    while (*str != '\0') {
+        hash = hash * prime + static_cast<uint8_t>(*str); // 显式转换为无符号
+        ++str;
     }
     return hash;
 }
+
 int main() {
     std::ios::sync_with_stdio(false);
     std::cin.tie(0);
