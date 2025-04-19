@@ -9,7 +9,7 @@
 #include "exceptions.h"
 #include "vector.h"
 using namespace sjtu;
-template<class KEY,class OTHER,int M = 2,int L = 2>  //我需要M L是偶数
+template<class KEY,class OTHER,int M = 100,int L = 100>  //我需要M L是偶数
 class BPT {
 private:
     std::fstream indexTree;//索引块  前2个int大小的块存nextIndexPos和 root.pos 先后顺序就是这个
@@ -34,7 +34,7 @@ private:
         OTHER other;
         KO() : k(), other() {}  // 添加默认构造
         KO(const KEY &_k,const OTHER &_other):k(_k),other(_other){}
-        bool operator<(const KO &a) { //重载<运算符
+        bool operator<(const KO a) { //重载<运算符
             if(this->k < a.k) {
                 return true;
             }else if(this -> k > a.k) {
@@ -80,8 +80,8 @@ private:
     int nextLeafNodePos;
 
     void openFile() {
-        indexTree.open(indexTree_name);
-        leaf.open(leaf_name);
+        indexTree.open(indexTree_name,std::ios::binary | std::ios::in | std::ios::out);
+        leaf.open(leaf_name,std::ios::binary | std::ios::in | std::ios::out);
     }
     void closeFile() {
         indexTree.close();
@@ -317,7 +317,6 @@ private:
         if(above.keyNum == M - 1) {  //需要对父节点进行分裂
             return true;
         }
-        writeIndexNode(above);
         return false;
     }
     bool Insert(IndexNode &current,KO &tmp) {
@@ -327,8 +326,8 @@ private:
          * 先从indexnode下面就是叶结点开始考虑
          */
         if(current.is_leaf) {
-            LeafNode search;
             int idx = searchIndexForInsert(tmp,current);
+            LeafNode search;
             readLeafNode(search,current.ChildPointer[idx]);
             idx = searchLeafForInsert(tmp,search);//插入位置的坐标
             if(idx == -1) {
@@ -338,7 +337,6 @@ private:
             for(int i = search.num;i > idx;i --) {
                 search.Info[i] = search.Info[i - 1];
             }
-            search.Info[idx] = tmp;
             search.num ++;
             if(search.num == L) { //需要裂块
                 if(splitLeaf(search,current,idx)) { //需要对索引块进行分裂
@@ -609,7 +607,7 @@ public:
         indexTree_name = s1;
         leaf_name = s2;
         openFile();
-        if(!indexTree || !leaf) {
+        if(!indexTree && !leaf) {
             indexTree.open(indexTree_name,std::ios::binary | std::ios::out);
             leaf.open(leaf_name,std::ios::binary | std::ios::out);
             initialize();
@@ -633,9 +631,9 @@ public:
     sjtu::vector<OTHER> find(const KEY &k) {
         openFile();
         sjtu::vector<OTHER> results;
-        /*if(root.keyNum == 0) {
+        if(root.keyNum == 0) {
             return results;
-        }*/
+        }
         IndexNode current = root;
         LeafNode target;
         int idx;
@@ -644,28 +642,20 @@ public:
             readIndexNode(current,idx);
         }
         idx = searchIndexToFind(k,current);
-        readLeafNode(target,current.ChildPointer[idx]);
+        readLeafNode(target,idx);
         idx = searchLeafToFind(k,target);
-        bool firstFlag = false;
         for(int i = idx;i < target.num;i ++) {
-            if(target.Info[i].k == k){
-                if(i == target.num - 1) {
-                    firstFlag = true;
-                }
-                results.push_back(target.Info[i].other);
-            }
+            results.push_back(target.Info[i].other);
         }
-        if(firstFlag) {
-            bool flag = true;
-            while(target.next != 0 && flag) {
-                readLeafNode(target,target.next);
-                for(int i = 0;i < target.num;i ++) {
-                    if(target.Info[i].k == k) {
-                        results.push_back(target.Info[i].other);
-                    }else {
-                        flag = false;
-                        break;
-                    }
+        bool flag = true;
+        while(target.next != 0 && flag) {
+            readLeafNode(target,target.next);
+            for(int i = 0;i < target.num;i ++) {
+                if(target.Info[i].k == k) {
+                    results.push_back(target.Info[i].other);
+                }else {
+                    flag = false;
+                    break;
                 }
             }
         }
