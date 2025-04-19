@@ -11,6 +11,7 @@ unsigned long long customHash(const char* str) {
     }
     return hash;
 }
+
 int main() {
     std::ios::sync_with_stdio(false);
     std::cin.tie(0);
