@@ -34,7 +34,7 @@ private:
         OTHER other;
         KO() : k(), other() {}  // 添加默认构造
         KO(const KEY &_k,const OTHER &_other):k(_k),other(_other){}
-        bool operator<(const KO a) { //重载<运算符
+        bool operator<(const KO &a) { //重载<运算符
             if(this->k < a.k) {
                 return true;
             }else if(this -> k > a.k) {
@@ -80,8 +80,8 @@ private:
     int nextLeafNodePos;
 
     void openFile() {
-        indexTree.open(indexTree_name,std::ios::binary | std::ios::in | std::ios::out);
-        leaf.open(leaf_name,std::ios::binary | std::ios::in | std::ios::out);
+        indexTree.open(indexTree_name);
+        leaf.open(leaf_name);
     }
     void closeFile() {
         indexTree.close();
@@ -326,8 +326,11 @@ private:
          * 先从indexnode下面就是叶结点开始考虑
          */
         if(current.is_leaf) {
-            int idx = searchIndexForInsert(tmp,current);
             LeafNode search;
+            //调试用
+            //readLeafNode(search,current.ChildPointer[0]);
+            //
+            int idx = searchIndexForInsert(tmp,current);
             readLeafNode(search,current.ChildPointer[idx]);
             idx = searchLeafForInsert(tmp,search);//插入位置的坐标
             if(idx == -1) {
@@ -337,6 +340,7 @@ private:
             for(int i = search.num;i > idx;i --) {
                 search.Info[i] = search.Info[i - 1];
             }
+            search.Info[idx] = tmp;
             search.num ++;
             if(search.num == L) { //需要裂块
                 if(splitLeaf(search,current,idx)) { //需要对索引块进行分裂
@@ -607,7 +611,7 @@ public:
         indexTree_name = s1;
         leaf_name = s2;
         openFile();
-        if(!indexTree && !leaf) {
+        if(!indexTree || !leaf) {
             indexTree.open(indexTree_name,std::ios::binary | std::ios::out);
             leaf.open(leaf_name,std::ios::binary | std::ios::out);
             initialize();
@@ -631,9 +635,9 @@ public:
     sjtu::vector<OTHER> find(const KEY &k) {
         openFile();
         sjtu::vector<OTHER> results;
-        if(root.keyNum == 0) {
+        /*if(root.keyNum == 0) {
             return results;
-        }
+        }*/
         IndexNode current = root;
         LeafNode target;
         int idx;
@@ -642,20 +646,28 @@ public:
             readIndexNode(current,idx);
         }
         idx = searchIndexToFind(k,current);
-        readLeafNode(target,idx);
+        readLeafNode(target,current.ChildPointer[idx]);
         idx = searchLeafToFind(k,target);
+        bool firstFlag = false;
         for(int i = idx;i < target.num;i ++) {
-            results.push_back(target.Info[i].other);
+            if(target.Info[i].k == k){
+                if(i == target.num - 1) {
+                    firstFlag = true;
+                }
+                results.push_back(target.Info[i].other);
+            }
         }
-        bool flag = true;
-        while(target.next != 0 && flag) {
-            readLeafNode(target,target.next);
-            for(int i = 0;i < target.num;i ++) {
-                if(target.Info[i].k == k) {
-                    results.push_back(target.Info[i].other);
-                }else {
-                    flag = false;
-                    break;
+        if(firstFlag) {
+            bool flag = true;
+            while(target.next != 0 && flag) {
+                readLeafNode(target,target.next);
+                for(int i = 0;i < target.num;i ++) {
+                    if(target.Info[i].k == k) {
+                        results.push_back(target.Info[i].other);
+                    }else {
+                        flag = false;
+                        break;
+                    }
                 }
             }
         }
