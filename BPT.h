@@ -274,7 +274,6 @@ private:
         current.keyNum = mid - 1;
         writeIndexNode(secondIndexNode);
         writeIndexNode(current);
-        //TODO
         for(int i = above.keyNum + 1;i > idx + 1;i --) {
             above.ChildPointer[i] = above.ChildPointer[i - 1];
         }
