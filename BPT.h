@@ -300,7 +300,6 @@ private:
         newLeaf.num = mid;
         current.num = mid;
         newLeaf.pos = ++ nextLeafNodePos;
-        //TODO Wait to be checked
         for(int i = above.keyNum + 1;i > idx + 1;i --) {
             above.ChildPointer[i] = above.ChildPointer[i - 1];
         }
