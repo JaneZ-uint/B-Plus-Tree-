@@ -387,7 +387,7 @@ private:
             above.ChildPointer[i] = above.ChildPointer[i + 1];
         }
         above.keyNum --;
-        if(above.keyNum < M/2) {
+        if(above.keyNum < M/2 + 1) {
             a = true;
         }else {
             writeIndexNode(above);
@@ -408,7 +408,7 @@ private:
             above.ChildPointer[i] = above.ChildPointer[i + 1];
         }
         above.keyNum --;
-        if(above.keyNum < M/2) {
+        if(above.keyNum < M/2 + 1) {
             a = true;
         }else {
             writeIndexNode(above);
@@ -432,7 +432,7 @@ private:
         }
         above.keyNum --;
         writeIndexNode(current);
-        if(above.keyNum < M/2) {
+        if(above.keyNum < M/2 + 1) {
             a = true;
         }else {
             writeIndexNode(above);
@@ -456,7 +456,7 @@ private:
         }
         above.keyNum --;
         writeIndexNode(beforeIndex);
-        if(above.keyNum < M/2) {
+        if(above.keyNum < M/2 + 1) {
             a = true;
         }else {
             writeIndexNode(above);
@@ -558,7 +558,7 @@ private:
             if(idx < current.keyNum) {
                 rightIndex = true;
                 readIndexNode(nextIndex,current.ChildPointer[idx + 1]);
-                if(nextIndex.keyNum > M/2) {
+                if(nextIndex.keyNum > M/2 + 1) {
                     child.Key[child.keyNum] = current.Key[idx];
                     child.ChildPointer[child.keyNum + 1] = nextIndex.ChildPointer[0];
                     current.Key[idx] = nextIndex.Key[0];
@@ -580,7 +580,7 @@ private:
             if(idx >= 1) {
                 leftIndex = true;
                 readIndexNode(beforeIndex,current.ChildPointer[idx - 1]);
-                if(beforeIndex.keyNum > M/2) {
+                if(beforeIndex.keyNum > M/2 + 1) {
                     for(int i = child.keyNum;i > 0;i --) {
                         child.Key[i] = child.Key[i - 1];
                     }
