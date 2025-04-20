@@ -5,7 +5,7 @@
 #include "BPT.h"
 unsigned long long customHash(const char* str) {
     unsigned long long hash = 0;
-    unsigned long long prime = 7; // 选择一个小的素数作为乘积因子
+    unsigned long long prime = 31; // 选择一个小的素数作为乘积因子
     for (size_t i = 0; i < strlen(str); ++i) {
         hash = hash * prime + str[i];
     }
