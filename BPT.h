@@ -558,7 +558,7 @@ private:
             if(idx < current.keyNum) {
                 rightIndex = true;
                 readIndexNode(nextIndex,current.ChildPointer[idx + 1]);
-                if(nextIndex.keyNum > M/2 + 1) {
+                if(nextIndex.keyNum + 1 > M/2 ) {
                     child.Key[child.keyNum] = current.Key[idx];
                     child.ChildPointer[child.keyNum + 1] = nextIndex.ChildPointer[0];
                     current.Key[idx] = nextIndex.Key[0];
@@ -580,7 +580,7 @@ private:
             if(idx >= 1) {
                 leftIndex = true;
                 readIndexNode(beforeIndex,current.ChildPointer[idx - 1]);
-                if(beforeIndex.keyNum > M/2 + 1) {
+                if(beforeIndex.keyNum + 1> M/2 ) {
                     for(int i = child.keyNum;i > 0;i --) {
                         child.Key[i] = child.Key[i - 1];
                     }
