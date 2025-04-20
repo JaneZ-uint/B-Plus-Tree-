@@ -591,7 +591,7 @@ private:
                     child.ChildPointer[0] = beforeIndex.ChildPointer[beforeIndex.keyNum];
                     current.Key[idx - 1] = beforeIndex.Key[beforeIndex.keyNum - 1];
                     beforeIndex.keyNum --;
-                    current.keyNum ++;
+                    child.keyNum ++;
                     writeIndexNode(current);
                     writeIndexNode(beforeIndex);
                     writeIndexNode(child);
