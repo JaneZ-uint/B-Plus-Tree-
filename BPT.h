@@ -387,7 +387,7 @@ private:
             above.ChildPointer[i] = above.ChildPointer[i + 1];
         }
         above.keyNum --;
-        if(above.keyNum < M/2 + 1) {
+        if(above.keyNum + 1< M/2) {
             a = true;
         }else {
             writeIndexNode(above);
@@ -408,7 +408,7 @@ private:
             above.ChildPointer[i] = above.ChildPointer[i + 1];
         }
         above.keyNum --;
-        if(above.keyNum < M/2 + 1) {
+        if(above.keyNum + 1< M/2 ) {
             a = true;
         }else {
             writeIndexNode(above);
@@ -432,7 +432,7 @@ private:
         }
         above.keyNum --;
         writeIndexNode(current);
-        if(above.keyNum < M/2 + 1) {
+        if(above.keyNum + 1< M/2) {
             a = true;
         }else {
             writeIndexNode(above);
@@ -456,7 +456,7 @@ private:
         }
         above.keyNum --;
         writeIndexNode(beforeIndex);
-        if(above.keyNum < M/2 + 1) {
+        if(above.keyNum + 1< M/2 ) {
             a = true;
         }else {
             writeIndexNode(above);
