@@ -9,7 +9,7 @@
 #include "exceptions.h"
 #include "vector.h"
 using namespace sjtu;
-template<class KEY,class OTHER,int M = 100,int L = 100>  //我需要M L是偶数
+template<class KEY,class OTHER,int M = 4,int L = 2>  //我需要M L是偶数
 class BPT {
 private:
     std::fstream indexTree;//索引块  前2个int大小的块存nextIndexPos和 root.pos 先后顺序就是这个
@@ -149,7 +149,10 @@ private:
             if(current.Key[mid].k < k) {
                 MinBlock = mid;
                 l = mid + 1;
-            }else {
+            }else if(current.Key[mid].k == k) {
+                MinBlock = mid - 1;//TODO Wait to be checked!!!!
+                r = mid - 1;
+            }else{
                 r = mid - 1;
             }
         }
@@ -325,10 +328,10 @@ private:
          * 先从indexnode下面就是叶结点开始考虑
          */
         if(current.is_leaf) {
-            int idx = searchIndexForInsert(tmp,current);
+            int idx1 = searchIndexForInsert(tmp,current);
             LeafNode search;
-            readLeafNode(search,current.ChildPointer[idx]);
-            idx = searchLeafForInsert(tmp,search);//插入位置的坐标
+            readLeafNode(search,current.ChildPointer[idx1]);
+            int idx = searchLeafForInsert(tmp,search);//插入位置的坐标
             if(idx == -1) {
                 return false;//插入节点原本就存在
             }
@@ -339,7 +342,7 @@ private:
             search.Info[idx] = tmp;
             search.num ++;
             if(search.num == L) { //需要裂块
-                if(splitLeaf(search,current,idx)) { //需要对索引块进行分裂
+                if(splitLeaf(search,current,idx1)) { //需要对索引块进行分裂
                     return true;
                 }else {
                     return false;
@@ -480,7 +483,7 @@ private:
                 LeafNode beforeLeaf;
                 if(targetPos < current.keyNum) {  //下一个存在
                     rightBlock = true;
-                    readLeafNode(nextLeaf,target.next);
+                    readLeafNode(nextLeaf,current.ChildPointer[targetPos + 1]);
                     if(nextLeaf.num > L/2) {  //可以借用 考虑借用第一个
                         target.Info[target.num] = nextLeaf.Info[0];
                         for(int i = 0;i < nextLeaf.num - 1;i ++) {
@@ -563,7 +566,7 @@ private:
                     return false;
                 }
             }
-            bool leftIndex = false;
+            bool leftIndex = false;//TODO
             if(idx >= 1) {
                 leftIndex = true;
                 readIndexNode(beforeIndex,current.ChildPointer[idx - 1]);
@@ -643,26 +646,21 @@ public:
         idx = searchIndexToFind(k,current);
         readLeafNode(target,current.ChildPointer[idx]);
         idx = searchLeafToFind(k,target);
-        bool fistFlag = false;
+
         for(int i = idx;i < target.num;i ++) {
             if(target.Info[i].k == k){
                 results.push_back(target.Info[i].other);
-                if(i == target.num - 1) {
-                    fistFlag = true;
-                }
             }
         }
-        if(fistFlag) {
-            bool flag = true;
-            while(target.next != 0 && flag) {
-                readLeafNode(target,target.next);
-                for(int i = 0;i < target.num;i ++) {
-                    if(target.Info[i].k == k) {
-                        results.push_back(target.Info[i].other);
-                    }else {
-                        flag = false;
-                        break;
-                    }
+        bool flag = true;
+        while(target.next != 0 && flag) {
+            readLeafNode(target,target.next);
+            for(int i = 0;i < target.num;i ++) {
+                if(target.Info[i].k == k) {
+                    results.push_back(target.Info[i].other);
+                }else {
+                    flag = false;
+                    break;
                 }
             }
         }
