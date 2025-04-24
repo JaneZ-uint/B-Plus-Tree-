@@ -18,7 +18,7 @@ int main() {
     int n;
     std::cin >> n;
     std::string op,index;
-    BPT<unsigned long long int,int,100,100> BPlusTree("IndexFile","LeafFile");
+    BPT<unsigned long long int,int> BPlusTree("IndexFile","LeafFile");
     int value;
     for(int i = 1;i <= n;i ++) {
         std::cin >> op;

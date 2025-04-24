@@ -9,7 +9,7 @@
 #include "exceptions.h"
 #include "vector.h"
 using namespace sjtu;
-template<class KEY,class OTHER,int M = 100,int L = 100>  //我需要M L是偶数
+template<class KEY,class OTHER,int M = 40,int L = 20> //我需要M L是偶数
 class BPT {
 private:
     std::fstream indexTree;//索引块  前2个int大小的块存nextIndexPos和 root.pos 先后顺序就是这个
@@ -59,8 +59,8 @@ private:
         bool is_leaf = false;
         int keyNum;//关键字数量
         int pos;//当前结点在disk上的位置
-        KO Key[M - 1];//注意：这里必须存键值对，因为可能存在一个键值对应多个value的情况
-        int ChildPointer[M];//磁盘位置
+        KO Key[M + 1];//注意：这里必须存键值对，因为可能存在一个键值对应多个value的情况
+        int ChildPointer[M + 1];//磁盘位置
 
     };
 
@@ -149,7 +149,10 @@ private:
             if(current.Key[mid].k < k) {
                 MinBlock = mid;
                 l = mid + 1;
-            }else {
+            }else if(current.Key[mid].k == k) {
+                MinBlock = mid - 1;//TODO Wait to be checked!!!!
+                r = mid - 1;
+            }else{
                 r = mid - 1;
             }
         }
@@ -251,7 +254,7 @@ private:
         root = newRoot;
         writeIndexNode(newRoot);
     }
-    bool splitNormalIndexNode(IndexNode &current,IndexNode &above,int idx) {
+    void splitNormalIndexNode(IndexNode &current,IndexNode &above,int idx,bool &a) {
         /*
          *   1  2 3 4 5
          *  / \  \ \ \ \
@@ -284,13 +287,14 @@ private:
         above.Key[idx] = current.Key[mid - 1];
         above.keyNum ++;
         if(above.keyNum == M - 1) {
-            return true;
+            a = true;
         }else {
             writeIndexNode(above);
-            return false;
+            a = false;
         }
     }
-    bool splitLeaf(LeafNode &current,IndexNode &above,int idx) { //分裂叶结点
+    void splitLeaf(LeafNode &current,IndexNode &above,int idx,bool &a) {
+        //分裂叶结点
         LeafNode newLeaf;
         int mid = L/2;
         for(int i = 0;i < mid;i ++) {
@@ -313,10 +317,11 @@ private:
         writeLeafNode(current);
         above.keyNum ++;
         if(above.keyNum == M - 1) {  //需要对父节点进行分裂
-            return true;
+            a = true;
+        }else{
+            writeIndexNode(above);
+            a = false;
         }
-        writeIndexNode(above);
-        return false;
     }
     bool Insert(IndexNode &current,KO &tmp) {
         /*
@@ -325,10 +330,10 @@ private:
          * 先从indexnode下面就是叶结点开始考虑
          */
         if(current.is_leaf) {
-            int idx = searchIndexForInsert(tmp,current);
+            int idx1 = searchIndexForInsert(tmp,current);
             LeafNode search;
-            readLeafNode(search,current.ChildPointer[idx]);
-            idx = searchLeafForInsert(tmp,search);//插入位置的坐标
+            readLeafNode(search,current.ChildPointer[idx1]);
+            int idx = searchLeafForInsert(tmp,search);//插入位置的坐标
             if(idx == -1) {
                 return false;//插入节点原本就存在
             }
@@ -339,7 +344,9 @@ private:
             search.Info[idx] = tmp;
             search.num ++;
             if(search.num == L) { //需要裂块
-                if(splitLeaf(search,current,idx)) { //需要对索引块进行分裂
+                bool a ;
+                splitLeaf(search,current,idx1,a);
+                if(a) { //需要对索引块进行分裂
                     return true;
                 }else {
                     return false;
@@ -353,7 +360,9 @@ private:
             int idx = searchIndexForInsert(tmp,current);
             readIndexNode(child,current.ChildPointer[idx]);
             if(Insert(child,tmp)) {  //需要对普通的IndexNode进行分裂
-                if(splitNormalIndexNode(child,current,idx)) {
+                bool a ;
+                splitNormalIndexNode(child,current,idx,a);
+                if(a) {
                     return true;
                 }else {
                     return false;
@@ -364,7 +373,7 @@ private:
         }
     }
 
-    bool mergeRightLeaf(LeafNode &current,LeafNode &nextLeaf,IndexNode &above,int idx) {
+    void mergeRightLeaf(LeafNode &current,LeafNode &nextLeaf,IndexNode &above,int idx,bool &a) {
         for(int i = 0;i < L/2;i ++) {
             current.Info[i + L/2 - 1] = nextLeaf.Info[i];
         }
@@ -378,14 +387,14 @@ private:
             above.ChildPointer[i] = above.ChildPointer[i + 1];
         }
         above.keyNum --;
-        if(above.keyNum < M/2) {
-            return true;
+        if(above.keyNum < M/2 + 1) {
+            a = true;
         }else {
             writeIndexNode(above);
-            return false;
+            a = false;
         }
     }
-    bool mergeLeftLeaf(LeafNode &current,LeafNode &beforeLeaf,IndexNode &above,int idx) {
+    void mergeLeftLeaf(LeafNode &current,LeafNode &beforeLeaf,IndexNode &above,int idx,bool &a) {
         for(int i = 0;i < L/2 - 1;i ++) {
             beforeLeaf.Info[i + L/2] = current.Info[i];
         }
@@ -399,14 +408,14 @@ private:
             above.ChildPointer[i] = above.ChildPointer[i + 1];
         }
         above.keyNum --;
-        if(above.keyNum < M/2) {
-            return true;
+        if(above.keyNum < M/2 + 1) {
+            a = true;
         }else {
             writeIndexNode(above);
-            return false;
+            a = false;
         }
     }
-    bool mergeRightIndex(IndexNode &current,IndexNode &nextIndex,IndexNode &above,int idx) {
+    void mergeRightIndex(IndexNode &current,IndexNode &nextIndex,IndexNode &above,int idx,bool &a) {
         for(int i = 0;i < nextIndex.keyNum;i ++) {
             current.Key[i + current.keyNum + 1] = nextIndex.Key[i];
         }
@@ -423,14 +432,14 @@ private:
         }
         above.keyNum --;
         writeIndexNode(current);
-        if(above.keyNum < M/2) {
-            return true;
+        if(above.keyNum < M/2 + 1) {
+            a = true;
         }else {
             writeIndexNode(above);
-            return false;
+            a = false;
         }
     }
-    bool mergeLeftIndex(IndexNode &current,IndexNode &beforeIndex,IndexNode &above,int idx) {
+    void mergeLeftIndex(IndexNode &current,IndexNode &beforeIndex,IndexNode &above,int idx,bool &a) {
         for(int i = 0;i < current.keyNum;i ++) {
             beforeIndex.Key[i + beforeIndex.keyNum + 1] = current.Key[i];
         }
@@ -447,11 +456,11 @@ private:
         }
         above.keyNum --;
         writeIndexNode(beforeIndex);
-        if(above.keyNum < M/2) {
-            return true;
+        if(above.keyNum < M/2 + 1) {
+            a = true;
         }else {
             writeIndexNode(above);
-            return false;
+            a =  false;
         }
     }
 
@@ -480,7 +489,7 @@ private:
                 LeafNode beforeLeaf;
                 if(targetPos < current.keyNum) {  //下一个存在
                     rightBlock = true;
-                    readLeafNode(nextLeaf,target.next);
+                    readLeafNode(nextLeaf,current.ChildPointer[targetPos + 1]);
                     if(nextLeaf.num > L/2) {  //可以借用 考虑借用第一个
                         target.Info[target.num] = nextLeaf.Info[0];
                         for(int i = 0;i < nextLeaf.num - 1;i ++) {
@@ -515,14 +524,18 @@ private:
                     }
                 }
                 if(rightBlock) {  //右块存在
-                    if(mergeRightLeaf(target,nextLeaf,current,targetPos)) {
+                    bool a ;
+                    mergeRightLeaf(target,nextLeaf,current,targetPos,a);
+                    if(a) {
                         return true;
                     }else {
                         return false;
                     }
                 }
                 if(leftBlock) {
-                    if(mergeLeftLeaf(target,beforeLeaf,current,targetPos)) {
+                    bool b;
+                    mergeLeftLeaf(target,beforeLeaf,current,targetPos,b);
+                    if(b) {
                         return true;
                     }else {
                         return false;
@@ -545,7 +558,7 @@ private:
             if(idx < current.keyNum) {
                 rightIndex = true;
                 readIndexNode(nextIndex,current.ChildPointer[idx + 1]);
-                if(nextIndex.keyNum > M/2) {
+                if(nextIndex.keyNum + 1 > M/2) {
                     child.Key[child.keyNum] = current.Key[idx];
                     child.ChildPointer[child.keyNum + 1] = nextIndex.ChildPointer[0];
                     current.Key[idx] = nextIndex.Key[0];
@@ -567,7 +580,7 @@ private:
             if(idx >= 1) {
                 leftIndex = true;
                 readIndexNode(beforeIndex,current.ChildPointer[idx - 1]);
-                if(beforeIndex.keyNum > M/2) {
+                if(beforeIndex.keyNum + 1> M/2 ) {
                     for(int i = child.keyNum;i > 0;i --) {
                         child.Key[i] = child.Key[i - 1];
                     }
@@ -578,7 +591,7 @@ private:
                     child.ChildPointer[0] = beforeIndex.ChildPointer[beforeIndex.keyNum];
                     current.Key[idx - 1] = beforeIndex.Key[beforeIndex.keyNum - 1];
                     beforeIndex.keyNum --;
-                    current.keyNum ++;
+                    child.keyNum ++;
                     writeIndexNode(current);
                     writeIndexNode(beforeIndex);
                     writeIndexNode(child);
@@ -586,19 +599,24 @@ private:
                 }
             }
             if(rightIndex) {
-                if(mergeRightIndex(child,nextIndex,current,idx)) {
+                bool c;
+                mergeRightIndex(child,nextIndex,current,idx,c);
+                if(c) {
                     return true;
                 }else {
                     return false;
                 }
             }
             if(leftIndex) {
-                if(mergeLeftIndex(child,beforeIndex,current,idx)) {
+                bool d;
+                mergeLeftIndex(child,beforeIndex,current,idx,d);
+                if(d) {
                     return true;
                 }else {
                     return false;
                 }
             }
+            return false;
         }else {
             return false;
         }
@@ -619,6 +637,7 @@ public:
         }
         closeFile();
     }
+
     ~BPT() {
         indexTree.seekp(0);
         leaf.seekp(0);
@@ -629,6 +648,7 @@ public:
         writeIndexNode(root);
         closeFile();
     }
+
     sjtu::vector<OTHER> find(const KEY &k) {
         openFile();
         sjtu::vector<OTHER> results;
@@ -642,32 +662,28 @@ public:
         idx = searchIndexToFind(k,current);
         readLeafNode(target,current.ChildPointer[idx]);
         idx = searchLeafToFind(k,target);
-        bool fistFlag = false;
+
         for(int i = idx;i < target.num;i ++) {
             if(target.Info[i].k == k){
                 results.push_back(target.Info[i].other);
-                if(i == target.num - 1) {
-                    fistFlag = true;
-                }
             }
         }
-        if(fistFlag) {
-            bool flag = true;
-            while(target.next != 0 && flag) {
-                readLeafNode(target,target.next);
-                for(int i = 0;i < target.num;i ++) {
-                    if(target.Info[i].k == k) {
-                        results.push_back(target.Info[i].other);
-                    }else {
-                        flag = false;
-                        break;
-                    }
+        bool flag = true;
+        while(target.next != 0 && flag) {
+            readLeafNode(target,target.next);
+            for(int i = 0;i < target.num;i ++) {
+                if(target.Info[i].k == k) {
+                    results.push_back(target.Info[i].other);
+                }else {
+                    flag = false;
+                    break;
                 }
             }
         }
         closeFile();
         return results;
     }
+
     void insert(const KEY &k,const OTHER &other) {
         openFile();
         KO tmp(k,other);
@@ -677,6 +693,7 @@ public:
         UpdateMetaData();
         closeFile();
     }
+
     void erase(const KEY &k,const OTHER &other) {
         openFile();
         KO tmp(k,other);
