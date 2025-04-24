@@ -9,7 +9,7 @@
 #include "exceptions.h"
 #include "vector.h"
 using namespace sjtu;
-template<class KEY,class OTHER,int M = 40,int L = 20> //我需要M L是偶数
+template<class KEY,class OTHER,int M = 40,int L = 50> //我需要M L是偶数
 class BPT {
 private:
     std::fstream indexTree;//索引块  前2个int大小的块存nextIndexPos和 root.pos 先后顺序就是这个
