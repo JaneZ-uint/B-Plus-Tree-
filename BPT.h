@@ -398,6 +398,7 @@ private:
         current.num += L/2;
         current.next = nextLeaf.next;
         writeLeafNode(current);
+        LeafCache.erase(nextLeaf.pos);//修改缓存
         for(int i = idx;i < above.keyNum - 1;i ++) {
             above.Key[i] = above.Key[i + 1];
         }
@@ -419,6 +420,8 @@ private:
         beforeLeaf.num += L/2 - 1;
         beforeLeaf.next = current.next;
         writeLeafNode(beforeLeaf);
+        LeafCache.erase(current.pos);
+
         for(int i = idx - 1;i < above.keyNum - 1;i ++) {
             above.Key[i] = above.Key[i + 1];
         }
@@ -450,6 +453,8 @@ private:
         }
         above.keyNum --;
         writeIndexNode(current);
+        IndexCache.erase(nextIndex.pos);
+
         if(above.keyNum < M/2 + 1) {
             a = true;
         }else {
@@ -474,6 +479,8 @@ private:
         }
         above.keyNum --;
         writeIndexNode(beforeIndex);
+        IndexCache.erase(current.pos);
+
         if(above.keyNum < M/2 + 1) {
             a = true;
         }else {
