@@ -56,7 +56,7 @@ private:
             HashMapNode* current = table[h];
             while(current) {
                 if(current->key == k) {
-                    return current.list_node;
+                    return current->list_node;
                 }
                 current = current->next;
             }

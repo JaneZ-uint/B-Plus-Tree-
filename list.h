@@ -7,7 +7,7 @@
 #include "LRUCache.h"
 template<class NodeType>
 class list {
-private:
+public:
     struct Node {
         Node *prev;
         Node *next;
@@ -105,7 +105,7 @@ public:
         return tail->data;
     }
 
-    void push_front(NodeType &value) {
+    void push_front(const NodeType &value) {
         Node *newNode = new Node(value);
         if(head == nullptr) {
             head = newNode;
@@ -232,7 +232,7 @@ public:
             node->next = nullptr;
             node->prev = tail;
             if(tail) {
-                tail.next = node;
+                tail->next = node;
             }else {
                 head = node;
             }
