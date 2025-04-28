@@ -9,6 +9,7 @@
 #include "exceptions.h"
 #include "vector.h"
 #include "LRUCache.h"
+
 using namespace sjtu;
 template<class KEY,class OTHER,int M = 50,int L = 50> //我需要M L是偶数
 class BPT {
@@ -80,6 +81,10 @@ private:
     int nextIndexNodePos;
     int nextLeafNodePos;
 
+    //添加LRU Cache
+    LRUCache<int,IndexNode> IndexCache;
+    LRUCache<int,LeafNode> LeafCache;
+
     void openFile() {
         indexTree.open(indexTree_name,std::ios::binary | std::ios::in | std::ios::out);
         leaf.open(leaf_name,std::ios::binary | std::ios::in | std::ios::out);
@@ -89,18 +94,30 @@ private:
         leaf.close();
     }
     void readIndexNode(IndexNode &current,int pos) {
+        if(IndexCache.get(pos,current)) {
+            return;
+        }
         indexTree.seekg(pos * sizeof(IndexNode) + IndexFileHeaderSize);
         indexTree.read(reinterpret_cast<char*>(&current),sizeof(IndexNode));
+        IndexCache.put(pos,current);
     }
     void readLeafNode(LeafNode &current,int pos) {
+        if(LeafCache.get(pos,current)) {
+            return;
+        }
         leaf.seekg(pos * sizeof(LeafNode) + LeafFileHeaderSize);
         leaf.read(reinterpret_cast<char*>(&current),sizeof(LeafNode));
+        LeafCache.put(pos,current);
     }
+
+
     void writeIndexNode(IndexNode &current) {
+        IndexCache.put(current.pos,current);
         indexTree.seekp(current.pos*sizeof(IndexNode) + IndexFileHeaderSize);
         indexTree.write(reinterpret_cast<char*>(&current),sizeof(IndexNode));
     }
     void writeLeafNode(LeafNode &current) {
+        LeafCache.put(current.pos,current);
         leaf.seekp(current.pos*sizeof(LeafNode) + LeafFileHeaderSize);
         leaf.write(reinterpret_cast<char*>(&current),sizeof(LeafNode));
     }
@@ -623,7 +640,7 @@ private:
         }
     }
 public:
-    BPT(const std::string &s1,const std::string &s2) {
+    BPT(const std::string &s1,const std::string &s2):IndexCache(1000),LeafCache(2000) {
         indexTree_name = s1;
         leaf_name = s2;
         openFile();
