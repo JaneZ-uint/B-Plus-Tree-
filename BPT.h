@@ -11,7 +11,7 @@
 #include "LRUCache.h"
 
 using namespace sjtu;
-template<class KEY,class OTHER,int M = 100,int L = 100> //我需要M L是偶数
+template<class KEY,class OTHER,int M = 1000,int L = 1000> //我需要M L是偶数
 class BPT {
 private:
     std::fstream indexTree;//索引块  前2个int大小的块存nextIndexPos和 root.pos 先后顺序就是这个
