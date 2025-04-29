@@ -1,7 +1,6 @@
 //
 // Created by JaneZ on 2025/4/21.
 //
-
 #ifndef LIST_H
 #define LIST_H
 template<class NodeType>
