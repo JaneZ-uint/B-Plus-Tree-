@@ -144,8 +144,13 @@ private:
         indexTree.read(reinterpret_cast<char*>(&tmp1),IndexFileHeaderSize);
         nextIndexNodePos = tmp1.first_free;
         leaf.read(reinterpret_cast<char*>(&tmp2),LeafFileHeaderSize);
-        indexTree.seekg(IndexFileHeaderSize + tmp1.root_pos * sizeof(IndexNode));
-        indexTree.read(reinterpret_cast<char*>(&root),sizeof(IndexNode));//读根结点
+        if (!IndexCache.get(tmp1.root_pos, root)) {
+            // 缓存未命中，从磁盘读取
+            indexTree.seekg(IndexFileHeaderSize + tmp1.root_pos * sizeof(IndexNode));
+            indexTree.read(reinterpret_cast<char*>(&root), sizeof(IndexNode));
+            // 确保放入缓存
+            IndexCache.put(root.pos, root);
+        }
         totalNum = tmp2.sum_data;
         nextLeafNodePos = tmp2.first_free;
     }
@@ -397,8 +402,8 @@ private:
         }
         current.num += L/2;
         current.next = nextLeaf.next;
-        writeLeafNode(current);
         LeafCache.erase(nextLeaf.pos);//修改缓存
+        writeLeafNode(current);
         for(int i = idx;i < above.keyNum - 1;i ++) {
             above.Key[i] = above.Key[i + 1];
         }
@@ -419,8 +424,8 @@ private:
         }
         beforeLeaf.num += L/2 - 1;
         beforeLeaf.next = current.next;
-        writeLeafNode(beforeLeaf);
         LeafCache.erase(current.pos);
+        writeLeafNode(beforeLeaf);
 
         for(int i = idx - 1;i < above.keyNum - 1;i ++) {
             above.Key[i] = above.Key[i + 1];
@@ -452,8 +457,8 @@ private:
             above.ChildPointer[i] = above.ChildPointer[i + 1];
         }
         above.keyNum --;
-        writeIndexNode(current);
         IndexCache.erase(nextIndex.pos);
+        writeIndexNode(current);
 
         if(above.keyNum < M/2 + 1) {
             a = true;
@@ -478,8 +483,8 @@ private:
             above.ChildPointer[i] = above.ChildPointer[i + 1];
         }
         above.keyNum --;
-        writeIndexNode(beforeIndex);
         IndexCache.erase(current.pos);
+        writeIndexNode(beforeIndex);
 
         if(above.keyNum < M/2 + 1) {
             a = true;
@@ -647,7 +652,7 @@ private:
         }
     }
 public:
-    BPT(const std::string &s1,const std::string &s2):IndexCache(100),LeafCache(100) {
+    BPT(const std::string &s1,const std::string &s2):IndexCache(500),LeafCache(500) {
         indexTree_name = s1;
         leaf_name = s2;
         openFile();
