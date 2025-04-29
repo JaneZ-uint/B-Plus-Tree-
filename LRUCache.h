@@ -100,9 +100,10 @@ private:
     size_t capacity;
 
     void move_to_front(typename list<CacheEntry>::Node* node) {
-        if (node != cacheList.begin().get_node()) {
-            cacheList.splice(cacheList.begin(), cacheList, typename list<CacheEntry>::iterator(node));
+        if (!node || cacheList.empty() || node == cacheList.begin().get_node()) {
+            return;
         }
+        cacheList.splice(cacheList.begin(), cacheList, typename list<CacheEntry>::iterator(node));
 
     }
 
@@ -118,8 +119,8 @@ public:
         if(!node) {
             return false;
         }
-        move_to_front(node);
         other = node->data.value;
+        move_to_front(node);
         return true;
     }
 
@@ -135,8 +136,8 @@ public:
 
         if(cacheList.size() >= capacity) {
             auto last = cacheList.back();
-            unordered_map.erase(last.key);
             cacheList.pop_back();
+            unordered_map.erase(last.key);
         }
 
         cacheList.push_front(CacheEntry(k,value));
