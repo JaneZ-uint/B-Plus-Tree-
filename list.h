@@ -205,7 +205,9 @@ public:
         } else {
             tail = current->prev;
         }
+        current->prev = current->next = nullptr;
         delete current;
+        current = nullptr;
         list_capacity --;
         return next_iter;
     }
