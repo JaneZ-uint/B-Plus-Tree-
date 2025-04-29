@@ -101,7 +101,7 @@ private:
 
     void move_to_front(typename list<CacheEntry>::Node* node) {
         if (node != cacheList.begin().get_node()) {
-            cacheList.splice(cacheList.begin(), cacheList, iterator(node));
+            cacheList.splice(cacheList.begin(), cacheList, typename list<CacheEntry>::iterator(node));
         }
 
     }
@@ -148,8 +148,9 @@ public:
         if(!node) {
             return;
         }
+        auto it = typename list<CacheEntry>::iterator(node);
         unordered_map.erase(k);
-        cacheList.erase(node);
+        cacheList.erase(it);
     }
 
     void clear() {
