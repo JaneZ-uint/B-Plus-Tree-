@@ -4,8 +4,6 @@
 
 #ifndef LIST_H
 #define LIST_H
-#include "LRUCache.h"
-#include "exceptions.h"
 template<class NodeType>
 class list {
 public:

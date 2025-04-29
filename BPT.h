@@ -5,8 +5,6 @@
 #define BPT_H
 #include <fstream>
 #include <string>
-
-#include "exceptions.h"
 #include "vector.h"
 #include "LRUCache.h"
 

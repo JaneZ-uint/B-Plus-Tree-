@@ -4,7 +4,6 @@
 #ifndef LRUCACHE_H
 #define LRUCACHE_H
 
-#include "BPT.h"
 #include "list.h"
 
 template<class KEY,class OTHER>
