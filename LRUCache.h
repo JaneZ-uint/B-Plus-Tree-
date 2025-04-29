@@ -28,7 +28,7 @@ private:
 
     class HashTable {
     private:
-        static const size_t HashTableSize = 1009;
+        static const size_t HashTableSize = 20000;
         HashMapNode* table[HashTableSize];
 
         size_t HASH(const KEY&k) {
