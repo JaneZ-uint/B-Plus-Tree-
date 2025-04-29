@@ -137,8 +137,8 @@ public:
         if(cacheList.size() >= capacity) {
             //std::cout << "Full Full Full Full Full Full JaneZ!" << '\n';
             auto last = cacheList.back();
-            cacheList.pop_back();
             unordered_map.erase(last.key);
+            cacheList.pop_back();
         }
 
         cacheList.push_front(CacheEntry(k,value));
