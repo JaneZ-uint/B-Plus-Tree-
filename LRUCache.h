@@ -145,12 +145,11 @@ public:
         if(!node) {
             return;
         }
-        cacheList.erase(node);
         unordered_map.erase(k);
+        cacheList.erase(node);
     }
 
     void clear() {
-        capacity = 0;
         unordered_map.clear();
         cacheList.clear();
     }

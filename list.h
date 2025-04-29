@@ -9,15 +9,19 @@ template<class NodeType>
 class list {
 public:
     struct Node {
-        Node *prev;
-        Node *next;
+        Node *prev = nullptr;
+        Node *next = nullptr;
         NodeType data;
 
         Node(const NodeType &t):prev(nullptr),next(nullptr),data(t){}
+        ~Node() {
+            prev = nullptr;
+            next = nullptr;
+        }
     };
 
-    Node *head;
-    Node *tail;
+    Node *head = nullptr;
+    Node *tail = nullptr;
     size_t list_capacity;
 public:
     list():head(nullptr),tail(nullptr),list_capacity(0){}
@@ -30,14 +34,20 @@ public:
         while(!empty()) {
             pop_front();
         }
+        head = nullptr;
+        tail = nullptr;
     }
 
     class iterator {
     private:
-        Node *current;
+        Node *current = nullptr;
 
     public:
         iterator(Node* t = nullptr):current(t){}
+
+        ~iterator() {
+            current = nullptr;
+        }
 
         NodeType& operator*() const {
             return current->data;
@@ -200,9 +210,7 @@ public:
     }
 
     void splice(iterator pos, list& other, iterator it) {
-        if(it == other.end()) {
-            return;
-        }
+        if (it == other.end() || other.empty() || &other == this && it == pos) return;
         Node *node = it.get_node();
         //从other链表中移除
         if(node->prev != nullptr) {
