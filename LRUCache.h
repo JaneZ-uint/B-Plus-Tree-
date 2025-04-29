@@ -104,7 +104,6 @@ private:
             return;
         }
         cacheList.splice(cacheList.begin(), cacheList, typename list<CacheEntry>::iterator(node));
-
     }
 
 public:
@@ -151,8 +150,9 @@ public:
             return;
         }
         auto it = typename list<CacheEntry>::iterator(node);
-        unordered_map.erase(k);
         cacheList.erase(it);
+        unordered_map.erase(k);
+
     }
 
     void clear() {

@@ -8,10 +8,10 @@
 
 #include "exceptions.h"
 #include "vector.h"
-#include "LRUCache.h"
+#include "LRUFakeCache.h"
 
 using namespace sjtu;
-template<class KEY,class OTHER,int M = 100,int L = 100> //我需要M L是偶数
+template<class KEY,class OTHER,int M = 50,int L = 50> //我需要M L是偶数
 class BPT {
 private:
     std::fstream indexTree;//索引块  前2个int大小的块存nextIndexPos和 root.pos 先后顺序就是这个
@@ -652,7 +652,7 @@ private:
         }
     }
 public:
-    BPT(const std::string &s1,const std::string &s2):IndexCache(50000),LeafCache(50000) {
+    BPT(const std::string &s1,const std::string &s2):IndexCache(20000),LeafCache(20000) {
         indexTree_name = s1;
         leaf_name = s2;
         openFile();
