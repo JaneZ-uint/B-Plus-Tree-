@@ -8,7 +8,7 @@
 
 #include "exceptions.h"
 #include "vector.h"
-#include "LRUFakeCache.h"
+#include "LRUCache.h"
 
 using namespace sjtu;
 template<class KEY,class OTHER,int M = 50,int L = 50> //我需要M L是偶数
