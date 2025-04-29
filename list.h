@@ -210,8 +210,10 @@ public:
     }
 
     void splice(iterator pos, list& other, iterator it) {
-        if (it == other.end() || other.empty() || &other == this && it == pos) return;
-        Node *node = it.get_node();
+        if (it == other.end()) return;
+        Node* node = it.get_node();
+        // 如果节点已经在目标位置，直接返回
+        if (&other == this && node == pos.get_node()) return;
         //从other链表中移除
         if(node->prev != nullptr) {
             node->prev->next = node->next;

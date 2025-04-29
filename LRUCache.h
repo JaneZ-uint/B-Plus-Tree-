@@ -100,7 +100,10 @@ private:
     size_t capacity;
 
     void move_to_front(typename list<CacheEntry>::Node* node) {
-        cacheList.splice(cacheList.begin(),cacheList,node);
+        if (node != cacheList.begin().get_node()) {
+            cacheList.splice(cacheList.begin(), cacheList, iterator(node));
+        }
+
     }
 
 public:
