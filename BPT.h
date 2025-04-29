@@ -647,7 +647,7 @@ private:
         }
     }
 public:
-    BPT(const std::string &s1,const std::string &s2):IndexCache(100),LeafCache(200) {
+    BPT(const std::string &s1,const std::string &s2):IndexCache(100),LeafCache(100) {
         indexTree_name = s1;
         leaf_name = s2;
         openFile();

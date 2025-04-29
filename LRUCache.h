@@ -48,7 +48,7 @@ private:
             size_t h = HASH(key);
             HashMapNode* new_node = new HashMapNode(key,node);
             new_node->next = table[h];
-            table[key] = new_node;
+            table[h] = new_node;
         }
 
         typename list<CacheEntry>::Node* find(const KEY& k) {
@@ -150,6 +150,7 @@ public:
     }
 
     void clear() {
+        capacity = 0;
         unordered_map.clear();
         cacheList.clear();
     }
