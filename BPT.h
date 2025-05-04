@@ -298,8 +298,8 @@ private:
         for(int i = 0;i < mid - 1;i ++) {
             secondRoot.Key[i] = current.Key[i + mid];
         }
-        //secondRoot.pos = ++nextIndexNodePos;
-        secondRoot.pos = allocateIndexPos();
+        secondRoot.pos = ++nextIndexNodePos;
+        //secondRoot.pos = allocateIndexPos();
         secondRoot.is_leaf = current.is_leaf;
         secondRoot.keyNum = mid - 1;
         current.keyNum = mid - 1;
@@ -309,8 +309,8 @@ private:
         newRoot.ChildPointer[0] = current.pos;
         newRoot.ChildPointer[1] = secondRoot.pos;
         newRoot.Key[0] = current.Key[mid -1];
-        //newRoot.pos = ++nextIndexNodePos;
-        newRoot.pos = allocateIndexPos();
+        newRoot.pos = ++nextIndexNodePos;
+        //newRoot.pos = allocateIndexPos();
         newRoot.keyNum = 1;
         newRoot.is_leaf = false;
         root = newRoot;
@@ -335,8 +335,8 @@ private:
             secondIndexNode.Key[i] = current.Key[i + mid];
         }
         secondIndexNode.is_leaf = current.is_leaf;
-        //secondIndexNode.pos = ++nextIndexNodePos;
-        secondIndexNode.pos = allocateIndexPos();
+        secondIndexNode.pos = ++nextIndexNodePos;
+        //secondIndexNode.pos = allocateIndexPos();
         secondIndexNode.keyNum = mid - 1;
         current.keyNum = mid - 1;
         writeIndexNode(secondIndexNode);
@@ -367,8 +367,8 @@ private:
         }
         newLeaf.num = mid;
         current.num = mid;
-        //newLeaf.pos = ++ nextLeafNodePos;
-        newLeaf.pos = allocateLeafPos();
+        newLeaf.pos = ++ nextLeafNodePos;
+        //newLeaf.pos = allocateLeafPos();
         for(int i = above.keyNum + 1;i > idx + 1;i --) {
             above.ChildPointer[i] = above.ChildPointer[i - 1];
         }
@@ -447,7 +447,7 @@ private:
         current.num += L/2;
         current.next = nextLeaf.next;
         LeafCache.erase(nextLeaf.pos);//修改缓存
-        releaseLeafPos(nextLeaf.pos);//空间回收
+        //releaseLeafPos(nextLeaf.pos);//空间回收
         writeLeafNode(current);
         for(int i = idx;i < above.keyNum - 1;i ++) {
             above.Key[i] = above.Key[i + 1];
@@ -471,7 +471,7 @@ private:
         beforeLeaf.num += L/2 - 1;
         beforeLeaf.next = current.next;
         LeafCache.erase(current.pos);
-        releaseLeafPos(current.pos);//空间回收
+        //releaseLeafPos(current.pos);//空间回收
         writeLeafNode(beforeLeaf);
         for(int i = idx - 1;i < above.keyNum - 1;i ++) {
             above.Key[i] = above.Key[i + 1];
@@ -505,7 +505,7 @@ private:
         }
         above.keyNum --;
         IndexCache.erase(nextIndex.pos);
-        releaseIndexPos(nextIndex.pos);//空间回收
+        //releaseIndexPos(nextIndex.pos);//空间回收
         writeIndexNode(current);
 
         if(above.keyNum < M/2 + 1) {
@@ -533,7 +533,7 @@ private:
         }
         above.keyNum --;
         IndexCache.erase(current.pos);
-        releaseIndexPos(current.pos);//空间回收
+        //releaseIndexPos(current.pos);//空间回收
         writeIndexNode(beforeIndex);
 
         if(above.keyNum < M/2 + 1) {
@@ -703,7 +703,7 @@ private:
     }
 
 public:
-    BPT(const std::string &s1,const std::string &s2):IndexCache(20000),LeafCache(20000) {
+    BPT(const std::string &s1,const std::string &s2):IndexCache(50000),LeafCache(50000) {
         indexTree_name = s1;
         leaf_name = s2;
         openFile();
