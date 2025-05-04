@@ -33,7 +33,7 @@ int main() {
         }else if(op == "find") {
             std::cin >> index;
             const char* tranfer_index = index.c_str();
-            std::vector<int> tmp = BPlusTree.find(customHash(tranfer_index));
+            sjtu::vector<int> tmp = BPlusTree.find(customHash(tranfer_index));
             if(tmp.empty()) {
                 std::cout << "null" << '\n';
             }else {

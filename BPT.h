@@ -87,8 +87,8 @@ private:
         bool is_leaf = false;
         int keyNum;//关键字数量
         int pos;//当前结点在disk上的位置
-        KO Key[M + 1];//注意：这里必须存键值对，因为可能存在一个键值对应多个value的情况
-        int ChildPointer[M + 1];//磁盘位置
+        KO Key[M + 5];//注意：这里必须存键值对，因为可能存在一个键值对应多个value的情况
+        int ChildPointer[M + 5];//磁盘位置
 
     };
 
@@ -731,7 +731,7 @@ public:
         closeFile();
     }
 
-    std::vector<OTHER> find(const KEY &k) {
+    sjtu::vector<OTHER> find(const KEY &k) {
         openFile();
         std::vector<OTHER> results;
         IndexNode current = root;
