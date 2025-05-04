@@ -18,10 +18,10 @@ private:
     std::string indexTree_name;
     std::string leaf_name;
 
-    sjtu::vector<int> freeIndexPos;
-    sjtu::vector<int> freeLeafPos;
+    //sjtu::vector<int> freeIndexPos;
+    //sjtu::vector<int> freeLeafPos;
 
-    int allocateIndexPos(){
+    /*int allocateIndexPos(){
         if(!freeIndexPos.empty()) {
             int pos = freeIndexPos.back();
             freeIndexPos.pop_back();
@@ -43,7 +43,7 @@ private:
     }
     void releaseLeafPos(int pos) {
         freeLeafPos.push_back(pos);
-    }
+    }*/
 
     struct IndexFileHeader{
         int root_pos;
@@ -62,7 +62,7 @@ private:
         OTHER other;
         KO() : k(), other() {}  // 添加默认构造
         KO(const KEY &_k,const OTHER &_other):k(_k),other(_other){}
-        bool operator<(const KO a) { //重载<运算符
+        bool operator<(const KO &a) { //重载<运算符
             if(this->k < a.k) {
                 return true;
             }else if(this -> k > a.k) {
@@ -150,8 +150,8 @@ private:
     }
 
     void initialize() {
-        freeIndexPos.clear();
-        freeLeafPos.clear();
+        //freeIndexPos.clear();
+        //freeLeafPos.clear();
 
         root.is_leaf = true;
         root.keyNum = 0;
