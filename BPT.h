@@ -5,6 +5,7 @@
 #define BPT_H
 #include <fstream>
 #include <string>
+#include <vector>
 #include "vector.h"
 #include "LRUCache.h"
 
@@ -730,9 +731,9 @@ public:
         closeFile();
     }
 
-    sjtu::vector<OTHER> find(const KEY &k) {
+    std::vector<OTHER> find(const KEY &k) {
         openFile();
-        sjtu::vector<OTHER> results;
+        std::vector<OTHER> results;
         IndexNode current = root;
         LeafNode target;
         int idx;
