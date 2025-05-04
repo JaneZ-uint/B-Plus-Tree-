@@ -17,6 +17,33 @@ private:
     std::string indexTree_name;
     std::string leaf_name;
 
+    sjtu::vector<int> freeIndexPos;
+    sjtu::vector<int> freeLeafPos;
+
+    int allocateIndexPos(){
+        if(!freeIndexPos.empty()) {
+            int pos = freeIndexPos.back();
+            freeIndexPos.pop_back();
+            return pos;
+        }
+        return ++nextIndexNodePos;
+    }
+    int allocateLeadfPos() {
+        if(!freeLeafPos.empty()) {
+            int pos = freeLeafPos.back();
+            freeLeafPos.pop_back();
+            return pos;
+        }
+        return ++nextLeafNodePos;
+    }
+
+    void releaseIndexPos(int pos) {
+        freeIndexPos.push_back(pos);
+    }
+    void releaseLeafPos(int pos) {
+        freeLeafPos.push_back(pos);
+    }
+
     struct IndexFileHeader{
         int root_pos;
         int first_free;
@@ -120,6 +147,9 @@ private:
         leaf.write(reinterpret_cast<char*>(&current),sizeof(LeafNode));
     }
     void initialize() {
+        freeIndexPos.clear();
+        freeLeafPos.clear();
+
         root.is_leaf = true;
         root.keyNum = 0;
         root.pos = 1;
@@ -135,6 +165,10 @@ private:
         writeLeafNode(FirstLeaf);
     }
     void LoadMetaData() {
+        //到底要不要clear
+        freeIndexPos.clear();
+        freeLeafPos.clear();
+
         indexTree.seekg(0);
         leaf.seekg(0);
         IndexFileHeader tmp1;
@@ -171,7 +205,7 @@ private:
                 MinBlock = mid;
                 l = mid + 1;
             }else if(current.Key[mid].k == k) {
-                MinBlock = mid - 1;//TODO Wait to be checked!!!!
+                MinBlock = mid - 1;
                 r = mid - 1;
             }else{
                 r = mid - 1;
@@ -259,7 +293,8 @@ private:
         for(int i = 0;i < mid - 1;i ++) {
             secondRoot.Key[i] = current.Key[i + mid];
         }
-        secondRoot.pos = ++nextIndexNodePos;
+        //secondRoot.pos = ++nextIndexNodePos;
+        secondRoot.pos = allocateIndexPos();
         secondRoot.is_leaf = current.is_leaf;
         secondRoot.keyNum = mid - 1;
         current.keyNum = mid - 1;
@@ -269,7 +304,8 @@ private:
         newRoot.ChildPointer[0] = current.pos;
         newRoot.ChildPointer[1] = secondRoot.pos;
         newRoot.Key[0] = current.Key[mid -1];
-        newRoot.pos = ++nextIndexNodePos;
+        //newRoot.pos = ++nextIndexNodePos;
+        newRoot.pos = allocateIndexPos();
         newRoot.keyNum = 1;
         newRoot.is_leaf = false;
         root = newRoot;
@@ -293,7 +329,8 @@ private:
             secondIndexNode.Key[i] = current.Key[i + mid];
         }
         secondIndexNode.is_leaf = current.is_leaf;
-        secondIndexNode.pos = ++nextIndexNodePos;
+        //secondIndexNode.pos = ++nextIndexNodePos;
+        secondIndexNode.pos = allocateIndexPos();
         secondIndexNode.keyNum = mid - 1;
         current.keyNum = mid - 1;
         writeIndexNode(secondIndexNode);
@@ -323,7 +360,8 @@ private:
         }
         newLeaf.num = mid;
         current.num = mid;
-        newLeaf.pos = ++ nextLeafNodePos;
+        //newLeaf.pos = ++ nextLeafNodePos;
+        newLeaf.pos = allocateLeadfPos();
         for(int i = above.keyNum + 1;i > idx + 1;i --) {
             above.ChildPointer[i] = above.ChildPointer[i - 1];
         }
@@ -401,6 +439,7 @@ private:
         current.num += L/2;
         current.next = nextLeaf.next;
         LeafCache.erase(nextLeaf.pos);//修改缓存
+        releaseLeafPos(nextLeaf.pos);//空间回收
         writeLeafNode(current);
         for(int i = idx;i < above.keyNum - 1;i ++) {
             above.Key[i] = above.Key[i + 1];
@@ -423,8 +462,8 @@ private:
         beforeLeaf.num += L/2 - 1;
         beforeLeaf.next = current.next;
         LeafCache.erase(current.pos);
+        releaseLeafPos(current.pos);//空间回收
         writeLeafNode(beforeLeaf);
-
         for(int i = idx - 1;i < above.keyNum - 1;i ++) {
             above.Key[i] = above.Key[i + 1];
         }
@@ -456,6 +495,7 @@ private:
         }
         above.keyNum --;
         IndexCache.erase(nextIndex.pos);
+        releaseIndexPos(nextIndex.pos);//空间回收
         writeIndexNode(current);
 
         if(above.keyNum < M/2 + 1) {
@@ -482,6 +522,7 @@ private:
         }
         above.keyNum --;
         IndexCache.erase(current.pos);
+        releaseIndexPos(current.pos);//空间回收
         writeIndexNode(beforeIndex);
 
         if(above.keyNum < M/2 + 1) {
