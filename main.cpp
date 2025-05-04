@@ -13,8 +13,8 @@ unsigned long long customHash(const char* str) {
 }
 int main() {
     std::ios::sync_with_stdio(false);
-    std::cin.tie(0);
-    std::cout.tie(0);
+    std::cin.tie(nullptr);
+    std::cout.tie(nullptr);
 
     int n;
     std::cin >> n;
