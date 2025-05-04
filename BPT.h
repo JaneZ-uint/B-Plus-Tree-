@@ -101,7 +101,6 @@ private:
     };
 
     IndexNode root;
-    LeafNode Data;
     int totalNum = 0;
     int nextIndexNodePos;
     int nextLeafNodePos;
@@ -118,6 +117,7 @@ private:
         indexTree.close();
         leaf.close();
     }
+
     void readIndexNode(IndexNode &current,int pos) {
         if(IndexCache.get(pos,current)) {
             return;
@@ -126,6 +126,7 @@ private:
         indexTree.read(reinterpret_cast<char*>(&current),sizeof(IndexNode));
         IndexCache.put(pos,current);
     }
+
     void readLeafNode(LeafNode &current,int pos) {
         if(LeafCache.get(pos,current)) {
             return;
@@ -135,17 +136,18 @@ private:
         LeafCache.put(pos,current);
     }
 
-
     void writeIndexNode(IndexNode &current) {
         IndexCache.put(current.pos,current);
         indexTree.seekp(current.pos*sizeof(IndexNode) + IndexFileHeaderSize);
         indexTree.write(reinterpret_cast<char*>(&current),sizeof(IndexNode));
     }
+
     void writeLeafNode(LeafNode &current) {
         LeafCache.put(current.pos,current);
         leaf.seekp(current.pos*sizeof(LeafNode) + LeafFileHeaderSize);
         leaf.write(reinterpret_cast<char*>(&current),sizeof(LeafNode));
     }
+
     void initialize() {
         freeIndexPos.clear();
         freeLeafPos.clear();
@@ -164,11 +166,8 @@ private:
         FirstLeaf.pos = 1;
         writeLeafNode(FirstLeaf);
     }
-    void LoadMetaData() {
-        //到底要不要clear
-        //freeIndexPos.clear();
-        //freeLeafPos.clear();
 
+    void LoadMetaData() {
         indexTree.seekg(0);
         leaf.seekg(0);
         IndexFileHeader tmp1;
@@ -186,6 +185,7 @@ private:
         totalNum = tmp2.sum_data;
         nextLeafNodePos = tmp2.first_free;
     }
+
     void UpdateMetaData() {
         IndexFileHeader tmp1(root.pos,nextIndexNodePos);
         LeafFileHeader tmp2(totalNum,nextLeafNodePos);
@@ -213,6 +213,7 @@ private:
         }
         return MinBlock + 1;
     }
+
     int searchLeafToFind(const KEY &k,LeafNode &current) {
         int l = 0,r = current.num - 1;
         int ans = 0;
@@ -229,6 +230,7 @@ private:
         }
         return ans;
     }
+
     int searchIndexForInsert(const KO &k,IndexNode &current) { //查询当前索引块中相应的孩子指针 二分  对于插入删除操作
         int l = 0,r = current.keyNum - 1;
         int ans = -1;
@@ -246,6 +248,7 @@ private:
         }
         return ans + 1;//在childPointer数组中的下标
     }
+
     int searchLeafForInsert(const KO &k,LeafNode &current) { ////查询当前叶子块中KO对的位置 二分  对于插入操作
         int l = 0,r = current.num - 1;
         int ans = -1;
@@ -263,6 +266,7 @@ private:
         }
         return ans + 1;//在current中的插入位置 返回-1则表示值已经存在
     }
+
     int searchLeafForErase(const KO &k,LeafNode &current) { //查询当前叶子块中KO对的位置 二分  对于删除操作
         int l = 0,r = current.num - 1;
         int ans = -1;
@@ -279,6 +283,7 @@ private:
         }
         return ans;//返回-1则表示键值对不存在
     }
+
     void splitRoot(IndexNode &current) {  //分裂根节点稍有不同
         IndexNode secondRoot;
         int mid = M / 2;
@@ -311,6 +316,7 @@ private:
         root = newRoot;
         writeIndexNode(newRoot);
     }
+
     void splitNormalIndexNode(IndexNode &current,IndexNode &above,int idx,bool &a) {
         /*
          *   1  2 3 4 5
@@ -351,6 +357,7 @@ private:
             a = false;
         }
     }
+
     void splitLeaf(LeafNode &current,IndexNode &above,int idx,bool &a) {
         //分裂叶结点
         LeafNode newLeaf;
@@ -382,6 +389,7 @@ private:
             a = false;
         }
     }
+
     bool Insert(IndexNode &current,KO &tmp) {
         /*
          * 该函数如果需要继续分裂块，则return true ，不然return false
@@ -455,6 +463,7 @@ private:
             a = false;
         }
     }
+
     void mergeLeftLeaf(LeafNode &current,LeafNode &beforeLeaf,IndexNode &above,int idx,bool &a) {
         for(int i = 0;i < L/2 - 1;i ++) {
             beforeLeaf.Info[i + L/2] = current.Info[i];
@@ -478,6 +487,7 @@ private:
             a = false;
         }
     }
+
     void mergeRightIndex(IndexNode &current,IndexNode &nextIndex,IndexNode &above,int idx,bool &a) {
         for(int i = 0;i < nextIndex.keyNum;i ++) {
             current.Key[i + current.keyNum + 1] = nextIndex.Key[i];
@@ -505,6 +515,7 @@ private:
             a = false;
         }
     }
+
     void mergeLeftIndex(IndexNode &current,IndexNode &beforeIndex,IndexNode &above,int idx,bool &a) {
         for(int i = 0;i < current.keyNum;i ++) {
             beforeIndex.Key[i + beforeIndex.keyNum + 1] = current.Key[i];
@@ -690,6 +701,7 @@ private:
             return false;
         }
     }
+
 public:
     BPT(const std::string &s1,const std::string &s2):IndexCache(20000),LeafCache(20000) {
         indexTree_name = s1;
