@@ -166,8 +166,8 @@ private:
     }
     void LoadMetaData() {
         //到底要不要clear
-        freeIndexPos.clear();
-        freeLeafPos.clear();
+        //freeIndexPos.clear();
+        //freeLeafPos.clear();
 
         indexTree.seekg(0);
         leaf.seekg(0);
