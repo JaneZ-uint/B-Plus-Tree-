@@ -733,7 +733,7 @@ public:
 
     sjtu::vector<OTHER> find(const KEY &k) {
         openFile();
-        std::vector<OTHER> results;
+        sjtu::vector<OTHER> results;
         IndexNode current = root;
         LeafNode target;
         int idx;
