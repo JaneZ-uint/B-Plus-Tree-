@@ -1,7 +1,6 @@
 //
 // Created by JaneZ on 2025/4/13.
 //
-
 #ifndef VECTOR_H
 #define VECTOR_H
 
