@@ -1,5 +1,4 @@
 # B-Plus-Tree-
-
 Data structure for Ticket System.
 
 ## Introduction
