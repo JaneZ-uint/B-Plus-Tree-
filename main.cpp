@@ -1,13 +1,12 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <cstring>
 #include "BPT.h"
-unsigned long long customHash(const char* str) {
+unsigned long long customHash(const std::string &s) {
     unsigned long long hash = 0;
     unsigned long long prime = 31; // 选择一个小的素数作为乘积因子
-    for (size_t i = 0; i < strlen(str); ++i) {
-        hash = hash * prime + str[i];
+    for (size_t i = 0; i < s.size(); ++i) {
+        hash = hash * prime + s[i];
     }
     return hash;
 }
@@ -24,16 +23,13 @@ int main() {
         std::cin >> op;
         if(op == "insert") {
             std::cin >> index >> value;
-            const char* tranfer_index = index.c_str();
-            BPlusTree.insert(customHash(tranfer_index),value);
+            BPlusTree.insert(customHash(index),value);
         }else if(op == "delete") {
             std::cin >> index >> value;
-            const char* tranfer_index = index.c_str();
-            BPlusTree.erase(customHash(tranfer_index),value);
+            BPlusTree.erase(customHash(index),value);
         }else if(op == "find") {
             std::cin >> index;
-            const char* tranfer_index = index.c_str();
-            sjtu::vector<int> tmp = BPlusTree.find(customHash(tranfer_index));
+            sjtu::vector<int> tmp = BPlusTree.find(customHash(index));
             if(tmp.empty()) {
                 std::cout << "null" << '\n';
             }else {
