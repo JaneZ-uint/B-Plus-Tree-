@@ -92,16 +92,13 @@ private:
     };
 
     struct LeafNode {
-        bool is_leaf = true;
         int pos;//当前结点在disk上的位置
         int num;//存储键值对数量
         KO Info[L];//键值对信息
         int next;//下一个LeafNode位置
-
     };
 
     IndexNode root;
-    LeafNode Data;
     int totalNum = 0;
     int nextIndexNodePos;
     int nextLeafNodePos;
@@ -157,7 +154,6 @@ private:
         nextIndexNodePos = 1;
         nextLeafNodePos = 1;
         LeafNode FirstLeaf;
-        FirstLeaf.is_leaf = true;
         FirstLeaf.next = 0;
         FirstLeaf.num = 0;
         FirstLeaf.pos = 1;
