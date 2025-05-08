@@ -52,7 +52,6 @@ private:
     const int IndexFileHeaderSize = sizeof(IndexFileHeader);
 
     struct LeafFileHeader{
-        int sum_data;
         int first_free;
     };
     const int LeafFileHeaderSize = sizeof(LeafFileHeader);
@@ -89,6 +88,7 @@ private:
         int pos;//当前结点在disk上的位置
         KO Key[M + 5];//注意：这里必须存键值对，因为可能存在一个键值对应多个value的情况
         int ChildPointer[M + 5];//磁盘位置
+
     };
 
     struct LeafNode {
@@ -96,10 +96,10 @@ private:
         int num;//存储键值对数量
         KO Info[L];//键值对信息
         int next;//下一个LeafNode位置
+
     };
 
     IndexNode root;
-    int totalNum = 0;
     int nextIndexNodePos;
     int nextLeafNodePos;
     LRUCache<int,IndexNode> IndexCache;
@@ -150,7 +150,6 @@ private:
         root.keyNum = 0;
         root.pos = 1;
         root.ChildPointer[0] = 1;
-        totalNum = 0;
         nextIndexNodePos = 1;
         nextLeafNodePos = 1;
         LeafNode FirstLeaf;
@@ -177,12 +176,11 @@ private:
         }
         //indexTree.seekg(IndexFileHeaderSize + tmp1.root_pos * sizeof(IndexNode));
         //indexTree.read(reinterpret_cast<char*>(&root), sizeof(IndexNode));
-        totalNum = tmp2.sum_data;
         nextLeafNodePos = tmp2.first_free;
     }
     void UpdateMetaData() {
         IndexFileHeader tmp1(root.pos,nextIndexNodePos);
-        LeafFileHeader tmp2(totalNum,nextLeafNodePos);
+        LeafFileHeader tmp2(nextLeafNodePos);
         indexTree.seekp(0);
         indexTree.write(reinterpret_cast<char*>(&tmp1),IndexFileHeaderSize);
         writeIndexNode(root);
@@ -390,7 +388,6 @@ private:
             if(idx == -1) {
                 return false;//插入节点原本就存在
             }
-            totalNum ++;
             for(int i = search.num;i > idx;i --) {
                 search.Info[i] = search.Info[i - 1];
             }
@@ -542,7 +539,6 @@ private:
                 target.Info[i] = target.Info[i + 1];
             }
             target.num --;
-            totalNum --;
             if(target.num < L/2) { //太少了需要借或者并块
                 // 首先考虑从右边的块那儿借一个
                 bool rightBlock = false;
@@ -704,7 +700,7 @@ public:
         leaf.seekp(0);
         IndexFileHeader tmp1(root.pos,nextIndexNodePos);
         indexTree.write(reinterpret_cast<char*>(&tmp1),IndexFileHeaderSize);
-        LeafFileHeader tmp2(totalNum,nextLeafNodePos);
+        LeafFileHeader tmp2(nextLeafNodePos);
         leaf.write(reinterpret_cast<char*>(&tmp2),LeafFileHeaderSize);
         writeIndexNode(root);
         closeFile();
