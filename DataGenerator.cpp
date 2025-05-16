@@ -1,19 +1,11 @@
-//
-// Created by JaneZ on 2025/4/30.
-//
-
-// Thanks for @coffish 's help.
-// I add some file operations so that you can get the output in test_input.txt.
-// Answer will be given in test.ans.
-
 #include <iostream>
 #include <random>
 #include <chrono>
-#include <numeric>
 #include <vector>
 #include <string>
 #include <fstream>
 #include <algorithm>
+#include <map>
 
 template <class T> using Arr = std::vector<T>;
 
@@ -38,51 +30,56 @@ int main() {
             names[i] += 'a' + Rand(0, 25);
 
     Arr<std::string> qry;
-#define Q(x, ...) ({ sprintf(buf, x, ##__VA_ARGS__); qry.push_back(buf); })
-    Arr<int> perm(M);
-    std::iota(perm.begin(), perm.end(), 0);
-    std::shuffle(perm.begin(), perm.end(), rng);
 
-    Arr<Arr<int>> ans(M);
+    // 使用map来维护数据状态
+    std::map<std::string, std::vector<int>> data_map;
     int tot = -1;
 
     // 生成insert操作
     for (int i = 0; i < 10; ++i) {
         int p = Rand(0, M - 1);
-        Q("insert %s %d", names[p].c_str(), ++tot);
-        ans[p].push_back(tot);
+        sprintf(buf, "insert %s %d", names[p].c_str(), ++tot);
+        qry.push_back(buf);
+        data_map[names[p]].push_back(tot);
     }
 
     // 生成delete操作
     for (int i = 0; i < 10; ++i) {
-        if (Rand(0, 3) {  // 75%概率删除已有记录
+        if (Rand(0, 3)) {  // 75%概率删除已有记录
             int p = Rand(0, M - 1);
-            if (!ans[p].empty()) {
-                int t = Rand(0, ans[p].size() - 1);
-                Q("delete %s %d", names[p].c_str(), ans[p][t]);
-                ans[p].erase(ans[p].begin() + t);
+            if (!data_map[names[p]].empty()) {
+                int t = Rand(0, data_map[names[p]].size() - 1);
+                sprintf(buf, "delete %s %d", names[p].c_str(), data_map[names[p]][t]);
+                qry.push_back(buf);
+                data_map[names[p]].erase(data_map[names[p]].begin() + t);
             } else {
                 // 如果没有记录可删，改为插入新记录
-                Q("insert %s %d", names[p].c_str(), ++tot);
-                ans[p].push_back(tot);
+                sprintf(buf, "insert %s %d", names[p].c_str(), ++tot);
+                qry.push_back(buf);
+                data_map[names[p]].push_back(tot);
             }
         } else {  // 25%概率尝试删除不存在的记录
             int p = Rand(0, M - 1);
-            Q("delete %s %d", names[p].c_str(), ++tot);
-            // 不修改ans数组，因为这是一个无效删除
+            sprintf(buf, "delete %s %d", names[p].c_str(), ++tot);
+            qry.push_back(buf);
+            // 不修改map，因为这是一个无效删除
         }
     }
 
     // 生成find操作并输出答案
     for (int i = 0; i < 10; ++i) {
         int p = Rand(0, M - 1);
-        Q("find %s", names[p].c_str());
-        if (ans[p].empty()) {
+        sprintf(buf, "find %s", names[p].c_str());
+        qry.push_back(buf);
+
+        // 直接从map中获取答案
+        auto& vec = data_map[names[p]];
+        if (vec.empty()) {
             ansfile << "null\n";
         } else {
             // 排序输出结果以便于验证
-            std::sort(ans[p].begin(), ans[p].end());
-            for (auto x : ans[p]) {
+            std::sort(vec.begin(), vec.end());
+            for (auto x : vec) {
                 ansfile << x << " ";
             }
             ansfile << "\n";
