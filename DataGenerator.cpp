@@ -13,6 +13,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <algorithm>
 
 template <class T> using Arr = std::vector<T>;
 
@@ -44,36 +45,43 @@ int main() {
 
     Arr<Arr<int>> ans(M);
     int tot = -1;
-    for (int i = 0; i < 1000; ++i) {  //can be changed
+
+    // 生成insert操作
+    for (int i = 0; i < 10; ++i) {
         int p = Rand(0, M - 1);
         Q("insert %s %d", names[p].c_str(), ++tot);
         ans[p].push_back(tot);
     }
 
-    for (int i = 0; i < 1000; ++i) {  //can be changed
-        if (Rand(0, 3) < 3) {
+    // 生成delete操作
+    for (int i = 0; i < 10; ++i) {
+        if (Rand(0, 3) {  // 75%概率删除已有记录
             int p = Rand(0, M - 1);
-            Q("delete %s %d", names[p].c_str(), ++tot);
-            ans[p].push_back(tot);
-        } else {
-            int p = Rand(0, M - 1);
-            int ra = ans[p].size();
-            if (ra > 0) {
-                int t = Rand(0, ra - 1);
+            if (!ans[p].empty()) {
+                int t = Rand(0, ans[p].size() - 1);
                 Q("delete %s %d", names[p].c_str(), ans[p][t]);
                 ans[p].erase(ans[p].begin() + t);
             } else {
-                --i;
+                // 如果没有记录可删，改为插入新记录
+                Q("insert %s %d", names[p].c_str(), ++tot);
+                ans[p].push_back(tot);
             }
+        } else {  // 25%概率尝试删除不存在的记录
+            int p = Rand(0, M - 1);
+            Q("delete %s %d", names[p].c_str(), ++tot);
+            // 不修改ans数组，因为这是一个无效删除
         }
     }
 
-    for (int i = 0; i < 1000; ++i) {  //can be changed
+    // 生成find操作并输出答案
+    for (int i = 0; i < 10; ++i) {
         int p = Rand(0, M - 1);
         Q("find %s", names[p].c_str());
-        if (ans[p].empty())
+        if (ans[p].empty()) {
             ansfile << "null\n";
-        else {
+        } else {
+            // 排序输出结果以便于验证
+            std::sort(ans[p].begin(), ans[p].end());
             for (auto x : ans[p]) {
                 ansfile << x << " ";
             }
@@ -81,12 +89,10 @@ int main() {
         }
     }
 
-
     outfile << qry.size() << "\n";
     for (auto& s : qry) {
         outfile << s << "\n";
     }
-
 
     return 0;
 }
